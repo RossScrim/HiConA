@@ -1,21 +1,28 @@
 import datetime
 import os
 import fnmatch
+import re
 import timeit
 import tifffile
 import numpy as np
 from ConfigReader import ConfigReader
 
 
-def generate_well_names(row_start: int, row_end: int,
-                        col_start: int, col_end: int):
-    name = []
-    for r in range(row_start, row_end+1):
-        row = 'r' + "%02d" % r
-        for c in range(col_start, col_end+1):
-            col = 'c' + "%02d" % c
-            name.append(row+col)
-    return name
+def generate_well_names(dir_path: str):
+    pattern = 'r(\d+)c(\d+)'
+
+    file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+
+    unique_matched_wells = set()
+
+    for file_name in file_names:
+        # Use re.search to find the first match
+        match = re.search(pattern, file_name)
+        if match:
+            matched_wells = match.group()
+            unique_matched_wells.add(matched_wells)
+
+    return sorted(unique_matched_wells)
 
 
 def create_dir(save_path):
@@ -23,20 +30,70 @@ def create_dir(save_path):
         os.mkdir(save_path)
 
 
-def get_timelapse_images(dir_path:str, well_name: str, field_name: str, planes: int, channels: int, timepoints: int):
+def build_image_filename(dir_path: str, well_name: str, field_name: str, plane: int, channel: int, time_point: int):
+    return f'{dir_path}/{well_name}{field_name}p{plane:02d}-ch{channel}sk{time_point}fk1fl1.tiff'
+
+
+def file_exists(file_name: str):
+    return os.path.isfile(file_name)
+
+
+def read_image(file_name: str):
+    return tifffile.imread(file_name)
+
+
+def get_timelapse_images(dir_path: str, well_name: str, field_name: str, planes: int, channels: int, timepoints: int):
     images = []
+
     for channel in range(1, channels + 1):
-        channel_name = 'ch' + str(channel)
         for time_point in range(1, timepoints + 1):
-            time_name = 'sk' + str(time_point)
             for plane in range(1, planes + 1):
-                plane_name = 'p' + "%02d" % plane
-                file_name = dir_path + '\\' + well_name + field_name + plane_name + '-' + channel_name + time_name + 'fk1fl1' + '.tiff'
-                if os.path.isfile(file_name):
-                    images.append(tifffile.imread(file_name))
+                file_name = build_image_filename(dir_path, well_name, field_name, plane, channel, time_point)
+                if file_exists(file_name):
+                    images.append(read_image(file_name))
                 else:
-                    print(file_name + " does not exist")
+                    print(f'{file_name} does not exist')
+
     return np.array(images)
+
+
+def process_well(well_name, load_path, save_path, number_of_fields, number_of_planes, number_of_channels,
+                 number_of_timepoints, convert_8bit):
+    print(f"Processing {well_name} - {datetime.datetime.now()}")
+
+    for field in range(1, number_of_fields + 1):
+        field_name = f'f{field:02d}'
+        print(f"Processing {field_name} - {datetime.datetime.now()}")
+
+        try:
+            timelapse = get_timelapse_images(load_path, well_name, field_name, number_of_planes,
+                                                             number_of_channels, number_of_timepoints)
+
+            image_size_x = timelapse.shape[-1]
+            image_size_y = timelapse.shape[-2]
+
+            if convert_8bit:
+                timelapse = convert_to_8bit(timelapse)
+            # Reshape the array if there are multiple fields
+            if number_of_fields > 1:
+                timelapse = np.reshape(timelapse, (number_of_timepoints * number_of_channels,
+                                                   number_of_planes, image_size_y, image_size_x)).max(axis=1)
+
+            save_name = f'{well_name}{field_name}_timelapse.tiff'
+            tifffile.imwrite(f'{save_path}/{save_name}',
+                             np.swapaxes(np.reshape(timelapse, (
+                             number_of_channels, number_of_timepoints, image_size_y, image_size_x)),
+                                         0, 1),
+                             imagej=True,
+                             metadata={'axes': 'TCYX'})
+
+            print(f"Finished {field_name} - {datetime.datetime.now()}")
+        except FileNotFoundError as e:
+            print(f"Error processing {field_name}: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred while processing {field_name}: {e}")
+
+    print(f"Finished {well_name} - {datetime.datetime.now()}")
 
 
 def find_files(filename: list, dir_pathname: str):
@@ -51,20 +108,15 @@ def convert_to_8bit(images):
     return np.array(image_8bit)
 
 
-if __name__ == "__main__":
+def main():
     params = ConfigReader("config.json").get_config()
 
     # define parameters
     load_path = params["load_directory"]
     save_path = params["save_directory"]
 
-    row_min = params["row_min"]
-    row_max = params["row_max"]
-    col_min = params["col_min"]
-    col_max = params["col_max"]
+    convert_8bit = params["convert_to_8bit"]
 
-    image_size_x = params["image_x"]
-    image_size_y = params["image_y"]
     number_of_timepoints = params["number_of_timepoints"]
     number_of_channels = params["number_of_channels"]
     number_of_planes = params["number_of_planes"]
@@ -73,32 +125,19 @@ if __name__ == "__main__":
     create_dir(save_path)
     start = timeit.default_timer()
 
-    well_names = generate_well_names(row_min, row_max, col_min, col_max)
+    well_names = generate_well_names(load_path)
+    start_time = timeit.default_timer()
+
     for well_name in well_names:
-        well_file = find_files(well_name, load_path)
-        print(f"processing {well_name} - ", datetime.datetime.now())
+        process_well(well_name, load_path, save_path, number_of_fields, number_of_planes, number_of_channels,
+                     number_of_timepoints, convert_8bit)
 
-        for field in range(1, number_of_fields + 1):
-            field_name = 'f' + "%02d" % field
-            print(f"processing {field_name} - ", datetime.datetime.now())
-            timelapse_images = convert_to_8bit(get_timelapse_images(load_path, well_name, field_name, number_of_planes,
-                                     number_of_channels, number_of_timepoints))
-            timeimages = np.reshape(timelapse_images, (number_of_timepoints*number_of_channels,
-                                                       number_of_planes, image_size_y, image_size_x)).max(axis=1),
-            save_name = well_name + field_name + '_MAX_Projection-timelapse.tiff'
-            tifffile.imwrite(save_path + '\\' + save_name,
-                             np.swapaxes(np.reshape(timeimages, (number_of_channels, number_of_timepoints, image_size_y, image_size_x)),
-                                         0, 1),
-                             imagej=True,
-                             metadata={'axes': 'TCYX'})
-            print(f"Finished {field_name} - ", datetime.datetime.now())
-
-        print(f"Finished {well_name} - ", datetime.datetime.now())
-        final_time = timeit.default_timer()
-    print(f"All images took {final_time}s to merge")
+    final_time = timeit.default_timer()
+    print(f"All images took {final_time-start_time:.2f}s to merge")
 
 
-
+if __name__ == "__main__":
+    main()
 
 
 

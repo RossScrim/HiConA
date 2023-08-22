@@ -1,17 +1,11 @@
 {
-  "load_directory": "C:\\Users\\rscrimgeour\\Desktop\\Test_data_will",
-  "save_directory": "C:\\Users\\rscrimgeour\\Desktop\\Test_data_will_processed",
+  "load_directory": "C:\\Users\\rscrimgeour\\Desktop\\Julia Images",
+  "save_directory": "C:\\Users\\rscrimgeour\\Desktop\\Julia Images_processed",
 
-  "image_x": 1080,
-  "image_y": 1080,
+  "convert_to_8bit": false,
 
   "number_of_channels": 3,
-  "number_of_planes": 4,
+  "number_of_planes": 1,
   "number_of_fields": 1,
-  "number_of_timepoints": 300,
-  "row_min": 3,
-  "row_max": 3,
-  "col_min": 4,
-  "col_max": 4
-
+  "number_of_timepoints": 260
 }
