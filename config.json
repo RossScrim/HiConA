@@ -1,11 +1,14 @@
 {
-  "load_directory": "C:\\Users\\rscrimgeour\\Desktop\\Julia Images",
-  "save_directory": "C:\\Users\\rscrimgeour\\Desktop\\Julia Images_processed",
+  "load_directory": "C:\\Users\\rscrimgeour\\Desktop\\AW Images from the siRNA screen\\MOI 0 (+PLK1) Plate 119 [R13, C23]",
+  "save_directory": "C:\\Users\\rscrimgeour\\Desktop\\AW Images from the siRNA screen\\MOI 0 (+PLK1) Plate 119",
 
-  "convert_to_8bit": false,
+  "convert_to_8bit": true,
+  "timelapse_data": false,
+  "max_projection": true,
 
-  "number_of_channels": 3,
-  "number_of_planes": 1,
-  "number_of_fields": 1,
-  "number_of_timepoints": 260
+
+  "number_of_channels": 4,
+  "number_of_planes": 3,
+  "number_of_fields": 9,
+  "number_of_timepoints": 1
 }
