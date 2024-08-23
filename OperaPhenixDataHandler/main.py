@@ -182,7 +182,7 @@ def process_well(well_name, load_path, save_path, number_of_fields, number_of_pl
 
 
 def main():
-    params = ConfigReader("config.json").get_config()
+    params = ConfigReader("../config.json").get_config()
 
     # define parameters
     load_path = params["load_directory"]
