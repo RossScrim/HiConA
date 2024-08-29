@@ -87,7 +87,6 @@ class OperaGUI:
             save_dir = askdirectory(title="Choose saving directory for processed images")
             self.save_entry_text.set(save_dir)
 
-
     def confirm(self):
         """Checks the choices have been made for directories and processing steps. """
         if self.src_entry_text.get() == "":
@@ -123,8 +122,6 @@ class OperaProcessing:
     """Performs the specified processing steps on the images selected from the GUI."""
     def __init__(self, src_dir, save_dir, bit8, timelapse, maxproj, stitch):
         messagebox.showinfo(title="Opera Class", message="I'm calling the Opera Class")
-
-
 
     def generate_well_names(src_dir: str):
         """Generating the well names, to be used for saving of the processed images."""

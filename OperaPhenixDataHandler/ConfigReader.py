@@ -13,4 +13,4 @@ class ConfigReader:
 if __name__ == "__main__":
     config = ConfigReader("../config.json")
     config_file = config.get_config()
-    print(config_file)
+
