@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectStateService">
+    <option name="data">
+      <map>
+        <entry key="rcscrimgeour@googlemail.com">
+          <value>
+            <ProjectStateData>
+              <option name="conversationId" value="01J69K5MTVP5RZJWD6K5WB053M" />
+              <option name="indexedFiles">
+                <map>
+                  <entry key="$USER_HOME$/AppData/Local/JetBrains/PyCharm2023.3/httpFileSystem/catalog.json" value="21570" />
+                  <entry key="$PROJECT_DIR$/OperaPhenixDataHandler/FileManagement.py" value="257968" />
+                  <entry key="$PROJECT_DIR$/../dSTORMAnalysisTools/ConfigFile.json" value="217668" />
+                  <entry key="$PROJECT_DIR$/../dSTORMAnalysisTools/clustering_hdbscan.py" value="213132" />
+                  <entry key="$PROJECT_DIR$/../dSTORMAnalysisTools/shared_resources/cluster_tools.py" value="205797" />
+                </map>
+              </option>
+              <option name="projectId" value="01J69K4F8PZYTG629BDCGZGDB3" />
+            </ProjectStateData>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
