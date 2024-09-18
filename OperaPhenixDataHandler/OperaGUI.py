@@ -5,6 +5,9 @@ from tkinter.filedialog import askdirectory
 import re
 import os
 
+from ConfigReader import OperaExperimentConfigReader
+from FileManagement import FilePathHandler
+
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
     def __init__(self):
@@ -89,8 +92,8 @@ class OperaGUI:
 
     def confirm(self):
         """Checks the choices have been made for directories and processing steps. """
-        if self.src_entry_text.get() == "":
-            messagebox.showinfo(title="Missing Information", message="Please choose source directory")
+        if self.src_entry_text.get() == "" or not self.src_entry_text.get().endswith("hs"):
+            messagebox.showinfo(title="Missing Information", message="Please choose the hs source directory")
         elif self.save_entry_text.get() == "":
             messagebox.showinfo(title="Missing Information", message="Please choose saving directory")
         elif (self.bit8_state.get() == 0 and self.timelapse_state.get() == 0 and self.maxproj_state.get() == 0 and self.stitching_state.get()):
@@ -121,20 +124,30 @@ class OperaGUI:
 class OperaProcessing:
     """Performs the specified processing steps on the images selected from the GUI."""
     def __init__(self, src_dir, save_dir, bit8, timelapse, maxproj, stitch):
-        messagebox.showinfo(title="Opera Class", message="I'm calling the Opera Class")
+        #messagebox.showinfo(title="Opera Class", message="Time for processing!")
+        for measurement in [f for f in os.listdir(src_dir) if os.path.isdir(os.path.join(src_dir, f))]:
+            measurementPath = os.path.join(src_dir, measurement)
+            #print(measurementPath)
+            files = self.get_file_paths(measurementPath)
+            #print(files.archived_data_path)
+            #print(files.archived_data_config)
+            #print(files.well_names)
 
-    def generate_well_names(src_dir: str):
-        """Generating the well names, to be used for saving of the processed images."""
-        pattern = 'r(\d+)c(\d+)'
+            opera_config_file = self.get_metadata(files.archived_data_config)
+            #print(opera_config_file)
 
-        unique_matched_wells = set()
 
-        for file_name in os.listdir(src_dir):
-            match = re.search(pattern, file_name)
-            if match:
-                matched_wells = match.group()
-                unique_matched_wells.add(matched_wells)
+    def get_metadata(self, config_path: str):
+        """Call FileManagement class to get metadata for images. Returns opera_config_file."""
+        kw_file = config_path
+        #print(kw_file)
+        opera_config = OperaExperimentConfigReader(kw_file)
+        return opera_config.load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
 
-        return sorted(unique_matched_wells)
+    def get_file_paths(self, src_dir: str):
+        """Call ConfigReader to get file paths for all wells."""
+        archived_data_path = src_dir
+        return FilePathHandler(archived_data_path) 
+        
 
 OperaGUI()

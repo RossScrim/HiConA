@@ -6,9 +6,9 @@ class FilePathHandler:
     def __init__(self, archived_data_path: str):
         self.archived_data_path = archived_data_path + "\\"
         self.archived_data_config = os.path.join(self.archived_data_path,
-                                                 self.get_name_from_regexstring(self.archived_data_path, ".*\.kw\.txt")[0])
+                                                 self.get_name_from_regexstring(self.archived_data_path, r'.*\.kw\.txt')[0])
         self.archived_image_path = self.archived_data_path + "\\images"
-        self.well_names = self.get_name_from_regexstring(self.archived_image_path, 'r(\d+)c(\d+)')
+        self.well_names = self.get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
 
     def get_name_from_regexstring(self, dir_path: str, str_pattern: str):
         matched_string = [match.group() for file_name in os.listdir(dir_path) if
@@ -23,7 +23,7 @@ class FilePathHandler:
 
     def create_dir(save_path):
         if not os.path.exists(save_path):
-        os.makedirs(save_path)
+            os.makedirs(save_path)
 
 
 if __name__ == "__main__":
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     field_of_view = 4
     for field in range(0, field_of_view):
-        pattern = f"r\d+c\d+f0{field}p\d+-ch\d+t\d+.tiff"
+        pattern = fr"r\d+c\d+f0{field}p\d+-ch\d+t\d+.tiff"
         print(pattern)
         print(files.get_opera_phenix_images_from_FOV(files.well_names[0], pattern))
         ## do some processing
