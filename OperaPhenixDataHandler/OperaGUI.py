@@ -102,6 +102,7 @@ class OperaGUI:
             src_dir = self.src_entry_text.get()
             save_dir = self.save_entry_text.get()
 
+
             bit8 = self.bit8_state.get()
             timelapse = self.timelapse_state.get()
             maxproj = self.maxproj_state.get()

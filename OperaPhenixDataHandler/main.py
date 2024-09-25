@@ -7,42 +7,6 @@ import tifffile
 import numpy as np
 from ConfigReader import ConfigReader
 
-
-def generate_well_names_from_filenames(dir_path: str):
-    pattern = 'r(\d+)c(\d+)'
-
-    file_names = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-
-    unique_matched_wells = set()
-
-    for file_name in file_names:
-        match = re.search(pattern, file_name)
-        if match:
-            matched_wells = match.group()
-            unique_matched_wells.add(matched_wells)
-
-    return sorted(unique_matched_wells)
-
-
-def generate_well_names(dir_path: str):
-    pattern = 'r(\d+)c(\d+)'
-
-    unique_matched_wells = set()
-
-    for file_name in os.listdir(dir_path):
-        match = re.search(pattern, file_name)
-        if match:
-            matched_wells = match.group()
-            unique_matched_wells.add(matched_wells)
-
-    return sorted(unique_matched_wells)
-
-
-def create_dir(save_path):
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-
-
 def build_timelapse_image_filename(dir_path: str, well_name: str, field_name: str, plane: int, channel: int, time_point: int):
     filename = f"{well_name}{field_name}p{plane:02d}-ch{channel}sk{time_point}fk1fl1.tiff"
     return os.path.join(dir_path, filename)
@@ -53,43 +17,6 @@ def build_image_filename(dir_path: str, well_name: str, field_name: str, plane: 
     return os.path.join(dir_path, filename)
 
 
-def file_exists(file_name: str):
-    return os.path.isfile(file_name)
-
-
-def read_image(file_name: str):
-    return tifffile.imread(file_name)
-
-
-def get_images(dir_path: str, well_name: str, field_name: str, planes: int, channels: int):
-    images = []
-
-    for channel in range(1, channels + 1):
-        for plane in range(1, planes + 1):
-            file_name = build_image_filename(dir_path, well_name, field_name, plane, channel)
-            if file_exists(file_name):
-                images.append(read_image(file_name))
-            else:
-                print(f'{file_name} does not exist')
-
-    return np.array(images)
-
-
-def get_timelapse_images(dir_path: str, well_name: str, field_name: str, planes: int, channels: int, timepoints: int):
-    images = []
-
-    for channel in range(1, channels + 1):
-        for time_point in range(1, timepoints + 1):
-            for plane in range(1, planes + 1):
-                file_name = build_timelapse_image_filename(dir_path, well_name, field_name, plane, channel, time_point)
-                if file_exists(file_name):
-                    images.append(read_image(file_name))
-                else:
-                    print(f'{file_name} does not exist')
-
-    return np.array(images)
-
-
 def create_max_projection(number_of_planes, number_of_channels, images):
     images = np.stack(images)
     image_x_dim = np.size(images, 2)
@@ -97,12 +24,6 @@ def create_max_projection(number_of_planes, number_of_channels, images):
 
     projected_images = np.max(np.reshape(images, (number_of_channels, number_of_planes, image_y_dim, image_x_dim)), axis=1)
     return projected_images
-
-
-def find_files(filename: list, dir_pathname: str):
-    found_files = [file for file in os.listdir(dir_pathname) if fnmatch.fnmatch(file, filename+'*.*')]
-    return found_files
-
 
 def convert_to_8bit(images):
     image_8bit = []
