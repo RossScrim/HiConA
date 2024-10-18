@@ -45,7 +45,7 @@ def create_dir(save_path):
 
 def build_timelapse_image_filename(dir_path: str, well_name: str, field_name: str, plane: int, channel: int,
                                    time_point: int):
-    filename = f"{well_name}{field_name}p{plane:02d}-ch{channel}sk{time_point}fk1fl1.tiff"
+    filename = f"{well_name}\{well_name}{field_name}p{plane:02d}-ch{channel:02d}t{time_point:02d}.tiff"
     return os.path.join(dir_path, filename)
 
 
@@ -116,7 +116,7 @@ def convert_to_8bit(images):
 def process_well(well_name, load_path, save_path, number_of_fields, number_of_planes, number_of_channels,
                  number_of_timepoints, convert_8bit, run_timelapse, max_projection):
     print(f"Processing {well_name} - {datetime.datetime.now()}")
-
+    failed_FOV = []
     if not run_timelapse:
         for field in range(1, number_of_fields + 1):
             field_name = f'f{field:02d}'
@@ -175,12 +175,15 @@ def process_well(well_name, load_path, save_path, number_of_fields, number_of_pl
                 print(f"Finished {field_name} - {datetime.datetime.now()}")
             except FileNotFoundError as e:
                 print(f"Error processing {field_name}: {e}")
+                failed_FOV.append(f"{well_name}{field_name}")
                 continue
             except Exception as e:
                 print(f"An unexpected error occurred while processing {field_name}: {e}")
+                failed_FOV.append(f"{well_name}{field_name}")
                 continue
-    print(f"Finished {well_name} - {datetime.datetime.now()}")
 
+    print(f"Finished {well_name} - {datetime.datetime.now()}")
+    return failed_FOV
 
 def main():
     params = ConfigReader("config.json").get_config()
@@ -206,11 +209,14 @@ def main():
     print(well_names)
     start_time = timeit.default_timer()
 
+    images_failed_to_process = []
     for well_name in well_names:
-        process_well(well_name, load_path, save_path, number_of_fields, number_of_planes, number_of_channels,
-                     number_of_timepoints, convert_8bit, run_timelapse, max_projection)
+        failed_images = process_well(well_name, load_path, save_path, number_of_fields, number_of_planes, number_of_channels,
+                           number_of_timepoints, convert_8bit, run_timelapse, max_projection)
+        images_failed_to_process.append(failed_images)
 
     final_time = timeit.default_timer()
+    print(f"Images_failed_to_process{images_failed_to_process}")
     print(f"All images took {final_time - start_time:.2f}s to merge")
 
 
