@@ -130,12 +130,12 @@ class OperaProcessing:
             measurementPath = os.path.join(src_dir, measurement)
             #print(measurementPath)
             files = self.get_file_paths(measurementPath)
-            #print(files.archived_data_path)
+            print(files.archived_data_path)
             #print(files.archived_data_config)
             #print(files.well_names)
 
             opera_config_file = self.get_metadata(files.archived_data_config)
-            #print(opera_config_file)
+            print(opera_config_file)
 
 
     def get_metadata(self, config_path: str):
