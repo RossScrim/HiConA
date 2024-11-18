@@ -51,6 +51,6 @@ class OperaExperimentConfigReader:
 
 
 if __name__ == "__main__":
-    opera_config = OperaExperimentConfigReader("../88651da0-9ab0-4728-816f.kw.txt")
+    opera_config = OperaExperimentConfigReader("88651da0-9ab0-4728-816f.kw.txt")
     opera_config_file = opera_config.load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
     print(opera_config_file)
