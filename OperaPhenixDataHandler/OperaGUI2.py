@@ -74,11 +74,11 @@ class OperaGUI:
         measure_frame = tk.Frame(self.root)
         measure_frame.grid(column=0, row=1, padx=5)
 
-        self.var_list = []
+        self.measure_var_list = []
 
-        for index, measure in enumerate(self.measurement_dict.keys()):
-            self.var_list.append(tk.IntVar(value=0))
-            ttk.Checkbutton(measure_frame, variable=self.var_list[index],
+        for index, measure in enumerate(self.measurement_list):
+            self.measure_var_list.append(tk.IntVar(value=0))
+            ttk.Checkbutton(measure_frame, variable=self.measure_var_list[index],
                 text=measure).pack(fill='x')
             
         # Display 2D processing options
@@ -89,6 +89,9 @@ class OperaGUI:
         self.timelapse_state = tk.IntVar()
         self.maxproj_state = tk.IntVar()
         self.stitching_state = tk.IntVar()
+
+        #TODO Names of keys should match ImageProcessing functions?
+        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
 
         self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit", variable=self.bit8_state).pack(fill='x')
 
@@ -142,21 +145,21 @@ class OperaGUI:
             self.src_processing()
 
     def src_processing(self):
-        self.measurement_dict = {}
+        self.measurement_list = []
         for measurement in [f for f in os.listdir(self.src_dir) if (os.path.isdir(os.path.join(self.src_dir, f)) and f != "_configdata")]:
             measurement_path = os.path.join(self.src_dir, measurement)
 
             files = self.get_file_paths(measurement_path)
-            opera_config_file = self.get_metadata(files.archived_data_config)#
+            opera_config_file = self.get_metadata(files.archived_data_config)
 
             plate_name = opera_config_file["PLATENAME"]
             measure_num = opera_config_file["NAME"].split(" ")
             
             name = plate_name + " - " + measure_num[-1]
-            self.measurement_dict[name] = opera_config_file
+            self.measurement_list.append(name) 
         
-        self.measurement_dict = dict(sorted(self.measurement_dict.items()))
-        #print(self.measurement_dict)
+        self.measurement_list.sort()
+        #print(self.measurement_list)
 
     def get_metadata(self, config_path: str):
         """Call FileManagement class to get metadata for images. Returns opera_config_file."""
@@ -171,14 +174,30 @@ class OperaGUI:
         return FilePathHandler(archived_data_path) 
     
     def proc_confirm(self):
-        pass
+        if all(x.get() == 0 for x in self.measure_var_list):
+            messagebox.showinfo(title="Missing Information", message="Please select a measurement to analyse")
+        elif all(x.get() == 0 for x in self.processing_options.values()):
+            messagebox.showinfo(title="Missing Information", message="Please select a 2D processing option")
+        #No 3D options added yet - add here when needed
+        else:
+            self.measure_to_process = [self.measurement_list[i] for i in range(len(self.measurement_list)) if self.measure_var_list[i].get() == 1]
+            self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
+            self.root.destroy()
+            OperaProcessing(self.measure_to_process, self.processes_to_run)
+
+
 
 
 
 class OperaProcessing:
     """Performs the specified processing steps on the images selected from the GUI."""
-    def __init__(self, src_dir, save_dir, bit8, timelapse, maxproj, stitch):
-        pass
+    def __init__(self, measure_to_process, processes_to_run):
+        print("Processing measurement ")
+        for i in range(len(measure_to_process)):
+            print(measure_to_process[i])
+        print(" with processes ")
+        print(processes_to_run)
+
         
 
 OperaGUI()
