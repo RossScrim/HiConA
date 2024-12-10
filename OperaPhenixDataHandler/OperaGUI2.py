@@ -76,7 +76,7 @@ class OperaGUI:
 
         self.measure_var_list = []
 
-        for index, measure in enumerate(self.measurement_list):
+        for index, measure in enumerate(self.measurement_dict.keys()):
             self.measure_var_list.append(tk.IntVar(value=0))
             ttk.Checkbutton(measure_frame, variable=self.measure_var_list[index],
                 text=measure).pack(fill='x')
@@ -145,7 +145,7 @@ class OperaGUI:
             self.src_processing()
 
     def src_processing(self):
-        self.measurement_list = []
+        self.measurement_dict = {}
         for measurement in [f for f in os.listdir(self.src_dir) if (os.path.isdir(os.path.join(self.src_dir, f)) and f != "_configdata")]:
             measurement_path = os.path.join(self.src_dir, measurement)
 
@@ -153,13 +153,14 @@ class OperaGUI:
             opera_config_file = self.get_metadata(files.archived_data_config)
 
             plate_name = opera_config_file["PLATENAME"]
-            measure_num = opera_config_file["NAME"].split(" ")
+            measure_num = opera_config_file["MEASUREMENT"].split(" ")
+            guid = opera_config_file["GUID"]
             
             name = plate_name + " - " + measure_num[-1]
-            self.measurement_list.append(name) 
+            self.measurement_dict[name] = guid 
         
-        self.measurement_list.sort()
-        #print(self.measurement_list)
+        self.measurement_dict = dict(sorted(self.measurement_dict.items()))
+        print(self.measurement_dict.keys())
 
     def get_metadata(self, config_path: str):
         """Call FileManagement class to get metadata for images. Returns opera_config_file."""
@@ -180,23 +181,28 @@ class OperaGUI:
             messagebox.showinfo(title="Missing Information", message="Please select a 2D processing option")
         #No 3D options added yet - add here when needed
         else:
-            self.measure_to_process = [self.measurement_list[i] for i in range(len(self.measurement_list)) if self.measure_var_list[i].get() == 1]
+            #TODO Is there a nicer way to create the measure_to_process list? 
+            self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
-            OperaProcessing(self.measure_to_process, self.processes_to_run)
-
+            OperaProcessing(self.src_dir, self.save_dir, self.measure_to_process, self.processes_to_run)
 
 
 
 
 class OperaProcessing:
     """Performs the specified processing steps on the images selected from the GUI."""
-    def __init__(self, measure_to_process, processes_to_run):
+    def __init__(self, src_path, save_path, measure_to_process, processes_to_run):
         print("Processing measurement ")
         for i in range(len(measure_to_process)):
             print(measure_to_process[i])
-        print(" with processes ")
+        print("with processes ")
         print(processes_to_run)
+        print("from source "+ src_path + " and saving in " + save_path)
+
+        #TODO Loop through each measurement in measure_to_process.
+        # Everything from the measurement is in src_path + measurement - get kw.txt for metadata and location for wells.
+        # Loop through each FOV in each well and send to ImageProcessing.py
 
         
 
