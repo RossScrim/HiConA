@@ -1,5 +1,7 @@
+import tifffile
 import tkinter as tk
 import tkinter.ttk as ttk
+import numpy as np
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import re
@@ -7,6 +9,7 @@ import os
 
 from ConfigReader import OperaExperimentConfigReader
 from FileManagement import FilePathHandler
+from ImageProcessing import ImageProcessor
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
@@ -160,7 +163,7 @@ class OperaGUI:
             self.measurement_dict[name] = guid 
         
         self.measurement_dict = dict(sorted(self.measurement_dict.items()))
-        print(self.measurement_dict.keys())
+        #print(self.measurement_dict.keys())
 
     def get_metadata(self, config_path: str):
         """Call FileManagement class to get metadata for images. Returns opera_config_file."""
@@ -185,25 +188,63 @@ class OperaGUI:
             self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
-            OperaProcessing(self.src_dir, self.save_dir, self.measure_to_process, self.processes_to_run)
+            for cur_measurement in self.measure_to_process:
+                cur_files = FilePathHandler(os.path.join(self.src_dir, cur_measurement))
+                OperaProcessing(cur_files, self.processes_to_run, self.save_dir)
 
 
 
 
-class OperaProcessing:
-    """Performs the specified processing steps on the images selected from the GUI."""
-    def __init__(self, src_path, save_path, measure_to_process, processes_to_run):
-        print("Processing measurement ")
-        for i in range(len(measure_to_process)):
-            print(measure_to_process[i])
-        print("with processes ")
-        print(processes_to_run)
-        print("from source "+ src_path + " and saving in " + save_path)
+class OperaProcessing():
+    """Performs the specified processing steps on the measurements selected from the GUI."""
+    def __init__(self, files, processes_to_run, save_dir):
 
+        self.files = files
+        self.save_path = r"C:\Users\ewestlund\OneDrive - The Institute of Cancer Research\Desktop"
+        self.save_dir = save_dir
+        self.processes_to_run = processes_to_run # Dict with keys = process function name, and values = 0 or 1, indicating chosen processes
+        self.config_file = OperaExperimentConfigReader(self.files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
+        self.FOVs = self.config_file["FIELDS"]
+        self.channels = len(self.config_file["CHANNEL"])
+        self.planes = self.config_file["PLANES"]
+
+        self.run()
         #TODO Loop through each measurement in measure_to_process.
         # Everything from the measurement is in src_path + measurement - get kw.txt for metadata and location for wells.
         # Loop through each FOV in each well and send to ImageProcessing.py
 
+    def load_images(self, filepaths):
+        im_arr = []
+        for filepath in filepaths:
+            im_arr.append(tifffile.imread(filepath))
+            #print(im_arr)
+            if len(im_arr) == 1:
+                self.xy = len(im_arr[0])
         
+        im_arr = np.array(im_arr)
+        return im_arr
 
-OperaGUI()
+    
+    def run(self):
+        for cur_well in self.files.well_names[:8]:
+            cur_save = os.path.join(self.save_dir, cur_well)
+            self.files.create_dir(cur_save)
+            for cur_FOV in range(1, self.FOVs+1):
+                pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
+                cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
+                images = self.load_images(cur_image_name)
+
+                try:
+                    images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
+                    processor = ImageProcessor(images, self.config_file)
+                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"])
+                    tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tiff", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
+
+                except ValueError as e:
+                    print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
+                    continue
+                
+
+        
+if __name__ == "__main__":
+    OperaGUI()

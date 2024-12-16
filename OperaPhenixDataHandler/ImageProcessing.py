@@ -3,7 +3,7 @@ import tifffile
 from ConfigReader import OperaExperimentConfigReader
 
 
- # TODO Add this class if needed?
+# TODO Add this class if needed?
 class ImageFOVHandler:
     def __init__(self):
         pass

@@ -7,7 +7,7 @@ class FilePathHandler:
         self.archived_data_path = archived_data_path + "\\"
         self.archived_data_config = os.path.join(self.archived_data_path,
                                                  self.get_name_from_regexstring(self.archived_data_path, r'.*\.kw\.txt')[0])
-        self.archived_image_path = self.archived_data_path + "\\images"
+        self.archived_image_path = self.archived_data_path + "images"
         self.well_names = self.get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
 
     def get_name_from_regexstring(self, dir_path: str, str_pattern: str):
@@ -19,25 +19,25 @@ class FilePathHandler:
     def get_opera_phenix_images_from_FOV(self, well_name: str, pattern):
         well_path = os.path.join(self.archived_image_path, well_name)
         image_files = self.get_name_from_regexstring(well_path, pattern)
-        return image_files
+        return [os.path.join(well_path, image_files[i]) for i in range(len(image_files))]
 
-    def create_dir(save_path):
+    def create_dir(self, save_path):
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
 
 if __name__ == "__main__":
-    archived_data_path = r"X:\Ross\20241705_RPE1P53KO_siMMR_live-cell\hs\88651da0-9ab0-4728-816f-15417fe0fa61"
+    archived_data_path = r"X:\DSR\CONFOFAC\GLIOTEAM-OPERA\vmolinari\hs\d3d31154-c106-4002-a94c-82d30ba740e3"
     files = FilePathHandler(archived_data_path)
 
 
-    field_of_view = 4
+    field_of_view = 2
     for field in range(0, field_of_view):
         pattern = fr"r\d+c\d+f0{field}p\d+-ch\d+t\d+.tiff"
         print(pattern)
         print(files.get_opera_phenix_images_from_FOV(files.well_names[0], pattern))
         ## do some processing
 
-    print(files.archived_data_path)
-    print(files.archived_data_config)
-    print(files.well_names)
+    #print(files.archived_data_path)
+    #print(files.archived_data_config)
+    #print(files.well_names)
