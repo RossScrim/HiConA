@@ -21,7 +21,7 @@ class OperaGUI:
     def src_window(self):
         self.root = tk.Tk()
 
-        self.root.geometry("800x150")
+        #self.root.geometry("800x150")
         self.root.title("Opera Phenix Image Processing")
 
          # Choose directories
@@ -66,16 +66,16 @@ class OperaGUI:
     def process_window(self):
         self.root = tk.Tk()
 
-        self.root.geometry("800x800")
+        #self.root.geometry("800x800")
         self.root.title("Processing Selection")
 
         ttk.Label(self.root, text='Measurements', font=("Segoe UI", 14)).grid(column=0, row=0, padx=20, pady=0)
         ttk.Label(self.root, text='2D Processing Options', font=("Segoe UI", 14)).grid(column=1, row=0, padx=20, pady=0)
-        ttk.Label(self.root, text='3D Processing Options', font=("Segoe UI", 14)).grid(column=2, row=0, padx=20, pady=0)
+        #ttk.Label(self.root, text='3D Processing Options', font=("Segoe UI", 14)).grid(column=2, row=0, padx=20, pady=0)
 
         # Display the available measurements
         measure_frame = tk.Frame(self.root)
-        measure_frame.grid(column=0, row=1, padx=5)
+        measure_frame.grid(column=0, row=1, padx=5, sticky=tk.N)
 
         self.measure_var_list = []
 
@@ -91,10 +91,11 @@ class OperaGUI:
         self.bit8_state = tk.IntVar()
         self.timelapse_state = tk.IntVar()
         self.maxproj_state = tk.IntVar()
+        self.minproj_state = tk.IntVar()
         self.stitching_state = tk.IntVar()
 
         #TODO Names of keys should match ImageProcessing functions?
-        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
+        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
 
         self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit", variable=self.bit8_state).pack(fill='x')
 
@@ -102,8 +103,10 @@ class OperaGUI:
 
         self.maxproj_check = ttk.Checkbutton(option_frame, text="Perform maximum projection", variable=self.maxproj_state).pack(fill='x')
 
-        self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images", variable=self.stitching_state).pack(fill='x')
+        self.minproj_check = ttk.Checkbutton(option_frame, text="Perform minimum projection", variable=self.minproj_state).pack(fill='x')
 
+        self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images", variable=self.stitching_state).pack(fill='x')
+        """
         # Display 3D processing options
         option_3D_frame = tk.Frame(self.root)
         option_3D_frame.grid(column=2, row=1, padx=5, sticky=tk.N)
@@ -114,7 +117,7 @@ class OperaGUI:
         self.option1_check = ttk.Checkbutton(option_3D_frame, text="Option1", variable=self.option1_state).pack(fill='x')
 
         self.option2_check = ttk.Checkbutton(option_3D_frame, text="Option2", variable=self.option2_state).pack(fill='x')
-
+        """
         # Confirm button
         self.buttonframe = tk.Frame(self.root)
         self.buttonframe.grid(column=2, row=2)
@@ -140,6 +143,8 @@ class OperaGUI:
             messagebox.showinfo(title="Missing Information", message="Please choose the hs source directory")
         elif self.save_entry_text.get() == "":
             messagebox.showinfo(title="Missing Information", message="Please choose saving directory")
+        elif self.src_entry_text.get() == self.save_entry_text.get():
+            messagebox.showinfo(title="Missing Information", message="Please choose a different saving directory from your source directory")
         else:
             self.src_dir = self.src_entry_text.get()
             self.save_dir = self.save_entry_text.get()
@@ -190,7 +195,10 @@ class OperaGUI:
             self.root.destroy()
             for cur_measurement in self.measure_to_process:
                 cur_files = FilePathHandler(os.path.join(self.src_dir, cur_measurement))
-                OperaProcessing(cur_files, self.processes_to_run, self.save_dir)
+                cur_save_dir = os.path.join(self.save_dir, cur_measurement)
+                if not os.path.exists(cur_save_dir):
+                    os.makedirs(cur_save_dir)
+                OperaProcessing(cur_files, self.processes_to_run, cur_save_dir)
 
 
 
@@ -237,7 +245,7 @@ class OperaProcessing():
                 try:
                     images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
                     processor = ImageProcessor(images, self.config_file)
-                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"])
+                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
                     tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tiff", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
 
                 except ValueError as e:
