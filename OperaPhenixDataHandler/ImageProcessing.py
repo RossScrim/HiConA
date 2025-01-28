@@ -16,8 +16,9 @@ class ImageFOVHandler:
 class ImageProcessor:
     def __init__(self, images, config):
         self.image_array = np.array(images)
-        self.image_x_dim = np.shape(self.image_array)
-        self.image_y_dim = np.shape(self.image_array)
+        dimensions = np.shape(self.image_array)
+        self.image_x_dim = dimensions[2]
+        self.image_y_dim = dimensions[3]
 
         self.num_planes = config["PLANES"]
         self.num_channels = len(config["CHANNEL"])
@@ -32,13 +33,14 @@ class ImageProcessor:
         return self
     
     def EDF_projection(self):
-        plugins_dir = "C:/Users/ewestlund/Fiji.app/plugins"
+        plugins_dir = "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
         scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        ij = imagej.init("C:/Users/ewestlund/Fiji.app", mode="interactive")
+        ij = imagej.init("C:/Users/ewestlund/Fiji.app", mode="interactive") #Add path to Fiji.app folder
         ij.ui().showUI()
 
+        #In the macro, change where the bf.tiff is stored and where the processed_bf should be saved.
         macro = """
-        open("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/bf.tiff");
+        open("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/bf.tiff"); 
         print("image opened");
         run("EDF Easy mode", "quality='2' topology='0' show-topology='off' show-view='off'");
         print("EDF run");
@@ -46,22 +48,28 @@ class ImageProcessor:
         print("in while-loop");
 		wait(5000);}
 		selectImage("Output");
+        run("Duplicate...", "Output-1");
+        selectImage("Output-1");
+        run("Gaussian Blur...", "sigma=50");
+        imageCalculator("Divide create 32-bit", "Output","Output-1");
+        selectImage("Result of Output");
+        run("16-bit");
         saveAs("Tiff", "C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf");
         print("saved");
         close("*");
         """
 
-        processed_image = np.empty((4, 540, 540))
-        bf_channel = 2
+        processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
+        bf_channel = 2 #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
             if ch == bf_channel:
-                tifffile.imwrite("bf.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'})
+                tifffile.imwrite("bf.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
                 ij.py.run_macro(macro)
 
                 bf_array = []
-                bf_array.append(tifffile.imread("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf.tif"))
+                bf_array.append(tifffile.imread("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf.tif")) #Change where the processed_bf.tif is saved.
                 bf_array = np.array(bf_array)
 
                 processed_image[ch] = bf_array

@@ -256,7 +256,8 @@ class OperaProcessing():
                 except ValueError as e:
                     print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
                     continue
-                
+
+        print("Done!")        
 
         
 if __name__ == "__main__":
