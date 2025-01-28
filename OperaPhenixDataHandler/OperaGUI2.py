@@ -92,10 +92,11 @@ class OperaGUI:
         self.timelapse_state = tk.IntVar()
         self.maxproj_state = tk.IntVar()
         self.minproj_state = tk.IntVar()
+        self.edfproj_state = tk.IntVar()
         self.stitching_state = tk.IntVar()
 
         #TODO Names of keys should match ImageProcessing functions?
-        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
+        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "EDF_projection":self.edfproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
 
         self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit", variable=self.bit8_state).pack(fill='x')
 
@@ -105,7 +106,11 @@ class OperaGUI:
 
         self.minproj_check = ttk.Checkbutton(option_frame, text="Perform minimum projection", variable=self.minproj_state).pack(fill='x')
 
+        self.edfproj_check = ttk.Checkbutton(option_frame, text="Perform EDF projection (BF)", variable=self.edfproj_state).pack(fill='x')
+
         self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images", variable=self.stitching_state).pack(fill='x')
+        
+        #Add 3D options here
         """
         # Display 3D processing options
         option_3D_frame = tk.Frame(self.root)
@@ -241,11 +246,11 @@ class OperaProcessing():
                 pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
                 cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
                 images = self.load_images(cur_image_name)
-
+    
                 try:
                     images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
                     processor = ImageProcessor(images, self.config_file)
-                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
+                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"], edf_proj=self.processes_to_run["EDF_projection"])
                     tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tiff", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
 
                 except ValueError as e:
