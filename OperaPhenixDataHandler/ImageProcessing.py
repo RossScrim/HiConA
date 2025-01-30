@@ -17,12 +17,14 @@ class ImageProcessor:
     def __init__(self, images, config):
         self.image_array = np.array(images)
         dimensions = np.shape(self.image_array)
+        #print(dimensions)
         self.image_x_dim = dimensions[2]
         self.image_y_dim = dimensions[3]
 
         self.num_planes = config["PLANES"]
         self.num_channels = len(config["CHANNEL"])
         self.timepoints = config["TIMEPOINTS"]
+        #print(self.num_planes, self.num_channels, self.timepoints)
 
     def max_projection(self):
         self.image_array = np.max(self.image_array, axis=0)
@@ -60,7 +62,7 @@ class ImageProcessor:
         """
 
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
-        bf_channel = 2 #Change which channel is the bf_channel, 0-indexed.
+        bf_channel = 1 #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
             if ch == bf_channel:
@@ -74,6 +76,7 @@ class ImageProcessor:
 
                 processed_image[ch] = bf_array
             else:
+                tifffile.imwrite("fluo.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
                 processed_image[ch] = np.max(cur_image, axis=0)
         
         necessary_type = np.uint16
