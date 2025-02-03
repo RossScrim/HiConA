@@ -11,7 +11,7 @@ class FilePathHandler:
         self.well_names = self.get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
 
     def get_name_from_regexstring(self, dir_path: str, str_pattern: str):
-        matched_string = [match.group() for file_name in os.listdir(dir_path) if
+        matched_string = [match.group() for file_name in sorted(os.listdir(dir_path)) if
                                  (match := re.search(str_pattern, file_name))]
         return matched_string
 
