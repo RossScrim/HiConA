@@ -1,0 +1,55 @@
+Version	1.0.0
+{
+  "OBJECTTYPE": "MEASUREMENT",
+  "NAME": "Measurement 2",
+  "OWNER": "cmocanu",
+  "DATE": "2024-05-17T14:37:46.6630000Z",
+  "PLATETYPE": "96 PerkinElmer CellCarrier Ultra",
+  "WELLS": 96,
+  "CHANNEL": [
+    "Alexa 568",
+    "Alexa 647"
+  ],
+  "EXCITATIONFILTER": [
+    "561",
+    "640"
+  ],
+  "EMISSIONFILTER": [
+    "570-630",
+    "650-760"
+  ],
+  "EXPERIMENT": "20241705_RPE1P53KO_siMMR_live-cell",
+  "OPTICALMODE": "Confocal",
+  "OBJECTIVE": "40x Water, NA 1.1",
+  "MAGNIFICATION": "40",
+  "FIELDS": 31,
+  "PLANES": 3,
+  "MEASWELLS": 24,
+  "TIMEPOINTS": 96,
+  "TIMEPOINTBREAK": "No",
+  "MEASUREMENT": "Measurement 2",
+  "PLATENAME": "20241705_RPE1P53KO_siMMR_live-cell",
+  "DEVICE": "2400L21124",
+  "GUID": "88651da0-9ab0-4728-816f-15417fe0fa61",
+  "IMAGELOCATION": "Local Database",
+  "MEASUREDWELLS": 24,
+  "SCHEMA": "http://www.perkinelmer.com/PEHH/HarmonyV6",
+  "VISIBLE": true,
+  "AVAILABLECORRECTION": "Advanced",
+  "CHANNELTYPE": "Fluorescence",
+  "INSTRUMENTTYPE": "Opera Phenix",
+  "BINNING": 2,
+  "CORRECTIONVERSION": "2.0",
+  "REPETITIONMODE": "Plate",
+  "NROFSEQUENCES": 1,
+  "CAMERAROI": "2160x2160",
+  "NROFPIPETSTEPS": 0,
+  "COMMENT": "17/05/2024 15:37    User: cmocanu\r\nECO:\r\nTemperature was set to 37°C.\r\nCO2 was set to 5.0%.\r\n\r\n",
+  "__URL": "88651da0-9ab0-4728-816f.xml",
+  "__SIZE": 106578,
+  "__CHECKSUM": "d720b4225f0a3df9b1a2e0d72f1a5c3a9469b37339bb77a5c29ba12c650fe9a4",
+  "__IMAGEFILESIZE": 608999563763,
+  "__NROFIMAGEFILES": 428544
+}
+Timestamp	2024-06-05T21:15:42.6854904+01:00
+Checksum	1e151335730f9b230ad75a9de55dd7d4752efed4929acd670cd40b9170dc4735

@@ -1,14 +1,14 @@
 {
-  "load_directory": "Z:\\DSR\\LMFACCHE\\OPERA_shortcuts\\BREPPLEV-OPERA\\hdewhurst\\Timelaspe\\hs\\0755baf6-6d50-41b7-af3a-7884a7aa0c61\\images",
-  "save_directory": "Z:\\DSR\\LMFACCHE\\OPERA_shortcuts\\BREPPLEV-OPERA\\hdewhurst\\Timelaspe\\HD_results\\0755baf6-6d50-41b7-af3a-7884a7aa0c61",
+  "load_directory": "X:\\Ross\\20241705_RPE1P53KO_siMMR_live-cell\\hs\\88651da0-9ab0-4728-816f-15417fe0fa61",
+  "save_directory": "C:\\Users\\rscrimgeour\\Desktop\\AW Images from the siRNA screen\\MOI 0 (+PLK1) Plate 119",
 
-  "convert_to_8bit": false,
-  "timelapse_data": true,
+  "convert_to_8bit": true,
+  "timelapse": false,
   "max_projection": true,
 
 
-  "number_of_channels": 3,
-  "number_of_planes": 2,
+  "number_of_channels": 4,
+  "number_of_planes": 3,
   "number_of_fields": 9,
-  "number_of_timepoints": 206
+  "number_of_timepoints": 1
 }
