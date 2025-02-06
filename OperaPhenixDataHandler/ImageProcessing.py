@@ -52,10 +52,11 @@ class ImageProcessor:
 		selectImage("Output");
         run("Duplicate...", "Output-1");
         selectImage("Output-1");
-        run("Gaussian Blur...", "sigma=50");
+        run("Gaussian Blur...", "sigma=100");
         imageCalculator("Divide create 32-bit", "Output","Output-1");
         selectImage("Result of Output");
         run("16-bit");
+        run("Enhance Contrast", "saturated=0.35");
         saveAs("Tiff", "C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf");
         print("saved");
         close("*");
@@ -76,7 +77,7 @@ class ImageProcessor:
 
                 processed_image[ch] = bf_array
             else:
-                tifffile.imwrite("fluo.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
+                #tifffile.imwrite("fluo.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
                 processed_image[ch] = np.max(cur_image, axis=0)
         
         necessary_type = np.uint16

@@ -10,6 +10,7 @@ import os
 from ConfigReader import OperaExperimentConfigReader
 from FileManagement import FilePathHandler
 from ImageProcessing import ImageProcessor
+from StitchingImageJ import StitchProcessing
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
@@ -242,7 +243,9 @@ class OperaProcessing():
         for cur_well in self.files.well_names[:8]:
             cur_save = os.path.join(self.save_dir, cur_well)
             self.files.create_dir(cur_save)
+            
             for cur_FOV in range(1, self.FOVs+1):
+                FOV_rename_order = ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
                 pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
                 cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
                 images = self.load_images(cur_image_name)
@@ -251,11 +254,20 @@ class OperaProcessing():
                     images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
                     processor = ImageProcessor(images, self.config_file)
                     processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"], edf_proj=self.processes_to_run["EDF_projection"])
-                    tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tiff", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
+                    tifffile.imwrite(cur_save+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
 
+                    for ch in range(self.channels):
+                        ch_save_path = os.path.join(cur_save, "ch"+str(ch+1))
+                        if not os.path.exists(ch_save_path):
+                            os.makedirs(ch_save_path)
+                        tifffile.imwrite(ch_save_path+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image()[ch,:,:], imagej=True, metadata={'axes':'YX'})
+                    
                 except ValueError as e:
                     print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
                     continue
+                
+            StitchProcessing(cur_save)
+            
 
         print("Done!")        
         
