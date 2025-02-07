@@ -55,7 +55,7 @@ def stitch_remaining_imageJ(orgDir, saveDir, wellName, chName, ij):
     //path = replace(orgDir, "/", File.separator);
     //print(path);
 
-    run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
+    run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration.registered.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
 
     saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tif");
     close("*");
@@ -80,6 +80,11 @@ def mergeImages(orgDir, wellName, ij):
 
 
     run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
+
+    Stack.setChannel(1);
+    run("Red");
+    Stack.setChannel(2);
+    run("Grays");
 
     saveAs("Tiff", orgDir+File.separator+wellName+".tif");
     
@@ -201,4 +206,4 @@ class StitchingGUI:
 
 
 if __name__ == "__main__":
-    StitchProcessing("Z:/Florian/bce184b7-d089-418f-b0cd-57c5193941ef/r06c06")
+    StitchProcessing("Z:/Florian/bce184b7-d089-418f-b0cd-57c5193941ef/r06c01")
