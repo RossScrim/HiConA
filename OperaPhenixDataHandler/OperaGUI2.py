@@ -182,13 +182,10 @@ class OperaGUI:
         else:
             #TODO Is there a nicer way to create the measure_to_process list? 
             self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
-            self.measure_to_process_plate_name = [list(self.measurement_dict.keys())[list(self.measurement_dict.values()).index(v)] for v in self.measure_to_process]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
-            for cur_ind in range(len(self.measure_to_process)):
-                cur_measurement = self.measure_to_process[cur_ind]
-                cur_plate_name = self.measure_to_process_plate_name[cur_ind]
-
+            for cur_measurement in self.measure_to_process:
+                cur_plate_name = list(self.measurement_dict.keys())[list(self.measurement_dict.values()).index(cur_measurement)]
                 cur_files = FilePathHandler(os.path.join(self.src_dir, cur_measurement))
                 cur_save_dir = os.path.join(self.save_dir, cur_plate_name)
                 if not os.path.exists(cur_save_dir):
