@@ -75,7 +75,7 @@ def mergeImages(orgDir, wellName, ij):
     //@ String orgDir
     //@ String wellName
 
-    File.openSequence("Z:/Florian/bce184b7-d089-418f-b0cd-57c5193941ef/r06c01/Stitched/", " open");
+    File.openSequence(orgDir, " open");
     run("Images to Stack", "method=[Scale (smallest)] name="+wellName);
 
 
