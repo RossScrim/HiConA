@@ -11,6 +11,7 @@ from ConfigReader import OperaExperimentConfigReader
 from FileManagement import FilePathHandler
 from ImageProcessing import ImageProcessor
 from StitchingImageJ import StitchProcessing
+from CellposeSegmentation import cellpose_organiser
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
@@ -197,13 +198,10 @@ class OperaGUI:
         else:
             #TODO Is there a nicer way to create the measure_to_process list? 
             self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
-            self.measure_to_process_plate_name = [list(self.measurement_dict.keys())[list(self.measurement_dict.values()).index(v)] for v in self.measure_to_process]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
-            for cur_ind in range(len(self.measure_to_process)):
-                cur_measurement = self.measure_to_process[cur_ind]
-                cur_plate_name = self.measure_to_process_plate_name[cur_ind]
-
+            for cur_measurement in self.measure_to_process:
+                cur_plate_name = list(self.measurement_dict.keys())[list(self.measurement_dict.values()).index(cur_measurement)]
                 cur_files = FilePathHandler(os.path.join(self.src_dir, cur_measurement))
                 cur_save_dir = os.path.join(self.save_dir, cur_plate_name)
                 if not os.path.exists(cur_save_dir):
@@ -253,7 +251,7 @@ class OperaProcessing():
                 pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
                 cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
                 images = self.load_images(cur_image_name)
-    
+                
                 try:
                     images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
                     processor = ImageProcessor(images, self.config_file)
@@ -271,13 +269,18 @@ class OperaProcessing():
                     continue
                 
             try:
-                if self.processes_to_run["EDF_projection"] == 1:     
+                if self.processes_to_run["EDF_projection"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == 9:     
                     StitchProcessing(cur_save)
             
             except ValueError as e:
                 print("Error stitching well " + cur_well + " with ValueError.")
                 continue
             
+        try:
+            if self.processes_to_run["EDF_projection"] == 1:
+                cellpose_organiser(self.save_dir)
+        except:
+            print("Error segmenting with Cellpose.")
 
         print("Done!")        
         
