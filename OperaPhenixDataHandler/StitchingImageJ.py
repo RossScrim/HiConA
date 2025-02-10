@@ -74,10 +74,9 @@ def mergeImages(orgDir, wellName, ij):
     macro = """
     //@ String orgDir
     //@ String wellName
-
+    
     File.openSequence(orgDir, " open");
     run("Images to Stack", "method=[Scale (smallest)] name="+wellName);
-
 
     run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
 
@@ -87,7 +86,7 @@ def mergeImages(orgDir, wellName, ij):
     run("Grays");
 
     saveAs("Tiff", orgDir+File.separator+wellName+".tif");
-    
+
     close("*");
     """
 
@@ -98,7 +97,7 @@ def mergeImages(orgDir, wellName, ij):
 
     ij.py.run_macro(macro, args)
 
-def StitchProcessing(well_path):
+def StitchProcessing(well_path, BFch):
     plugins_dir = "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
     scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
     ij = imagej.init("C:/Users/ewestlund/Fiji.app")#, mode="interactive") #Add path to Fiji.app folder
@@ -110,7 +109,7 @@ def StitchProcessing(well_path):
     if not os.path.exists(stitched_path):
         os.makedirs(stitched_path)
 
-    BF_dir = "ch2" #Change if BF other channel
+    BF_dir = "ch"+str(BFch)
     BF_path = os.path.join(well_path, BF_dir)
 
     ch_directories = [d for d in os.listdir(well_path) if os.path.isdir(os.path.join(well_path, d)) and d.startswith("ch") and d != BF_dir]

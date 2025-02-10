@@ -91,24 +91,26 @@ class OperaGUI:
         option_frame.grid(column=1, row=1, padx=5, sticky=tk.N)
 
         self.bit8_state = tk.IntVar()
-        self.timelapse_state = tk.IntVar()
+        #self.timelapse_state = tk.IntVar()
         self.maxproj_state = tk.IntVar()
         self.minproj_state = tk.IntVar()
         self.edfproj_state = tk.IntVar()
         self.stitching_state = tk.IntVar()
 
         #TODO Names of keys should match ImageProcessing functions?
-        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "EDF_projection":self.edfproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
+        self.processing_options = {"convert_to_8bit": self.bit8_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "EDF_projection":self.edfproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
 
         self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit", variable=self.bit8_state).pack(fill='x')
 
-        self.timelapse_check = ttk.Checkbutton(option_frame, text="Timelapse Data", variable=self.timelapse_state).pack(fill='x')
+        #self.timelapse_check = ttk.Checkbutton(option_frame, text="Timelapse Data", variable=self.timelapse_state).pack(fill='x')
 
         self.maxproj_check = ttk.Checkbutton(option_frame, text="Perform maximum projection", variable=self.maxproj_state).pack(fill='x')
 
         self.minproj_check = ttk.Checkbutton(option_frame, text="Perform minimum projection", variable=self.minproj_state).pack(fill='x')
 
-        self.edfproj_check = ttk.Checkbutton(option_frame, text="Perform EDF projection (BF)", variable=self.edfproj_state).pack(fill='x')
+        self.edfproj_check = ttk.Checkbutton(option_frame, text="Perform EDF projection (Please indicate BF channel in box below)", variable=self.edfproj_state).pack(fill='x')
+        self.edfproj_BFch_var = tk.IntVar()
+        self.edfproj_BFch_entry = ttk.Entry(option_frame, text=self.edfproj_BFch_var, width=5, background='White').pack(fill='x')
 
         self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images", variable=self.stitching_state).pack(fill='x')
         
@@ -195,6 +197,8 @@ class OperaGUI:
         elif all(x.get() == 0 for x in self.processing_options.values()):
             messagebox.showinfo(title="Missing Information", message="Please select a 2D processing option")
         #No 3D options added yet - add here when needed
+        elif self.edfproj_state.get() == 1 and (self.edfproj_BFch_var.get() not in [1,2,3,4,5,6]):
+            messagebox.showinfo(title="Missing Information", message="Please provide the BF channel number")
         else:
             #TODO Is there a nicer way to create the measure_to_process list? 
             self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
@@ -206,14 +210,15 @@ class OperaGUI:
                 cur_save_dir = os.path.join(self.save_dir, cur_plate_name)
                 if not os.path.exists(cur_save_dir):
                     os.makedirs(cur_save_dir)
-                OperaProcessing(cur_files, self.processes_to_run, cur_save_dir)
-
-
+                if self.edfproj_state.get() == 1:
+                    OperaProcessing(cur_files, self.processes_to_run, cur_save_dir, int(self.edfproj_BFch_var.get()))
+                else:
+                    OperaProcessing(cur_files, self.processes_to_run, cur_save_dir)
 
 
 class OperaProcessing():
     """Performs the specified processing steps on the measurements selected from the GUI."""
-    def __init__(self, files, processes_to_run, save_dir):
+    def __init__(self, files, processes_to_run, save_dir, BFchannel=-1):
 
         self.files = files
         self.save_path = r"C:\Users\ewestlund\OneDrive - The Institute of Cancer Research\Desktop"
@@ -223,11 +228,16 @@ class OperaProcessing():
         self.FOVs = self.config_file["FIELDS"]
         self.channels = len(self.config_file["CHANNEL"])
         self.planes = self.config_file["PLANES"]
-
+        self.timepoints = self.config_file["TIMEPOINTS"]
+        self.BFch = BFchannel
+        self.is_data_timelapse = self.check_is_data_timelapse()
         self.run()
-        #TODO Loop through each measurement in measure_to_process.
-        # Everything from the measurement is in src_path + measurement - get kw.txt for metadata and location for wells.
-        # Loop through each FOV in each well and send to ImageProcessing.py
+        
+    def check_is_data_timelapse(self):
+        if self.timepoints > 1:
+            return True
+        else:
+            return False
 
     def load_images(self, filepaths):
         im_arr = []
@@ -242,47 +252,88 @@ class OperaProcessing():
 
     
     def run(self):
-        for cur_well in self.files.well_names[:8]:
+        for cur_well in self.files.well_names:
             cur_save = os.path.join(self.save_dir, cur_well)
             self.files.create_dir(cur_save)
-            
-            for cur_FOV in range(1, self.FOVs+1):
-                FOV_rename_order = ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
-                pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
-                cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
-                images = self.load_images(cur_image_name)
-                
-                try:
-                    images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
-                    processor = ImageProcessor(images, self.config_file)
-                    processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"], edf_proj=self.processes_to_run["EDF_projection"])
-                    tifffile.imwrite(cur_save+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
 
-                    for ch in range(self.channels):
-                        ch_save_path = os.path.join(cur_save, "ch"+str(ch+1))
-                        if not os.path.exists(ch_save_path):
-                            os.makedirs(ch_save_path)
-                        tifffile.imwrite(ch_save_path+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image()[ch,:,:], imagej=True, metadata={'axes':'YX'})
-                    
-                except ValueError as e:
-                    print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
-                    continue
-                
-            try:
-                if self.processes_to_run["EDF_projection"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == 9:     
-                    StitchProcessing(cur_save)
-            
-            except ValueError as e:
-                print("Error stitching well " + cur_well + " with ValueError.")
-                continue
-            
-        try:
             if self.processes_to_run["EDF_projection"] == 1:
-                cellpose_organiser(self.save_dir)
-        except:
-            print("Error segmenting with Cellpose.")
+                for cur_FOV in range(1, self.FOVs+1):
+                    FOV_rename_order = ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
+                    pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
+                    cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
+                    images = self.load_images(cur_image_name)
+                
+                    try:
+                        images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
+                        processor = ImageProcessor(images, self.config_file)
+                        processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"], edf_proj=self.processes_to_run["EDF_projection"], edf_BFch=self.BFch-1)
+                        tifffile.imwrite(cur_save+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
 
-        print("Done!")        
+                        for ch in range(self.channels):
+                            ch_save_path = os.path.join(cur_save, "ch"+str(ch+1))
+                            if not os.path.exists(ch_save_path):
+                                os.makedirs(ch_save_path)
+                            tifffile.imwrite(ch_save_path+"/"+cur_well+"f"+FOV_rename_order[cur_FOV-1]+".tif", processor.get_image()[ch,:,:], imagej=True, metadata={'axes':'YX'})
+                    
+                    except ValueError as e:
+                        print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
+                        continue
+
+                try:
+                    if self.processes_to_run["EDF_projection"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == len(FOV_rename_order):     
+                        StitchProcessing(cur_save, self.BFch+1)
+            
+                except ValueError as e:
+                    print("Error stitching well " + cur_well + " with ValueError.")
+                    continue
+
+            elif not self.is_data_timelapse:
+                for cur_FOV in range(1, self.FOVs+1):
+                    pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
+                    cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
+                    images = self.load_images(cur_image_name)
+
+                    try:
+                        images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
+                        processor = ImageProcessor(images, self.config_file)
+                        processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
+                        tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tif", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
+
+                    except ValueError as e:
+                        print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
+                        continue
+                    
+            else:
+                print("Doing timelapse data")
+                for cur_FOV in range(1, self.FOVs+1):
+                    print("FOVcall")
+                    processed_image = []
+                    for timepoint in range(1, self.timepoints):
+                        print("Timepoint call")
+                        pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t0?{timepoint}.tiff"
+                        cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
+                        images = self.load_images(cur_image_name)
+
+                        try:
+                            images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
+                            processor = ImageProcessor(images, self.config_file)
+                            processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
+                            processed_image.append(processor.get_image())
+
+                        except ValueError as e:
+                            print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
+                            continue
+
+                    processed_images = np.array(processed_image)
+                    tifffile.imwrite(cur_save+"/"+cur_well + "f"+str(cur_FOV)+".tif", processed_images, imagej=True, metadata={'axes':'TCYX'})
+            
+        if self.processes_to_run["EDF_projection"] == 1:
+            try:
+                cellpose_organiser(self.save_dir)
+            except:
+                print("Error segmenting with Cellpose.")
+
+        print(f"Done processing to {cur_save}!")        
         
 if __name__ == "__main__":
     OperaGUI()

@@ -34,7 +34,7 @@ class ImageProcessor:
         self.image_array = np.min(self.image_array, axis=0)
         return self
     
-    def EDF_projection(self):
+    def EDF_projection(self, BF_ch):
         plugins_dir = "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
         scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
         ij = imagej.init("C:/Users/ewestlund/Fiji.app", mode="interactive") #Add path to Fiji.app folder
@@ -63,7 +63,7 @@ class ImageProcessor:
         """
 
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
-        bf_channel = 1 #Change which channel is the bf_channel, 0-indexed.
+        bf_channel = BF_ch #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
             if ch == bf_channel:
@@ -99,14 +99,14 @@ class ImageProcessor:
         return self
     
 
-    def process(self, max_proj=False, min_proj=False, edf_proj = False, to_8bit=False):
+    def process(self, max_proj=False, min_proj=False, edf_proj=False, edf_BFch=-1, to_8bit=False):
         """Processes the image based on flags for specific operations."""
         if max_proj:
             self.max_projection()
         if min_proj:
             self.min_projection()
         if edf_proj:
-            self.EDF_projection()
+            self.EDF_projection(edf_BFch)
         if to_8bit:
             self.convert_to_8bit()
         return self  # Return self to allow method chaining
