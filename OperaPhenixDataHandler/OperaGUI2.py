@@ -225,7 +225,7 @@ class OperaProcessing:
         return im_arr   
     
     def run(self):
-        for cur_well in self.files.well_names[:8]:
+        for cur_well in self.files.well_names:
             cur_save = os.path.join(self.save_dir, cur_well)
             self.files.create_dir(cur_save)
 
