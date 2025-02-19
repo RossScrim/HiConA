@@ -2,7 +2,7 @@ import tifffile
 import tkinter as tk
 import tkinter.ttk as ttk
 import numpy as np
-from tkinter import messagebox
+from tkinter import messagebox, Scrollbar, Canvas
 from tkinter.filedialog import askdirectory
 import re
 import os
@@ -68,7 +68,7 @@ class OperaGUI:
     def process_window(self):
         self.root = tk.Tk()
 
-        #self.root.geometry("800x800")
+        self.root.geometry("850x800")
         self.root.title("Processing Selection")
 
         ttk.Label(self.root, text='Measurements', font=("Segoe UI", 14)).grid(column=0, row=0, padx=20, pady=0)
@@ -76,14 +76,23 @@ class OperaGUI:
         #ttk.Label(self.root, text='3D Processing Options', font=("Segoe UI", 14)).grid(column=2, row=0, padx=20, pady=0)
 
         # Display the available measurements
-        measure_frame = tk.Frame(self.root)
+        measure_frame = tk.Frame(self.root, height=800)
         measure_frame.grid(column=0, row=1, padx=5, sticky=tk.N)
+        self.canvas = Canvas(measure_frame)
+        int_measure_frame = tk.Frame(self.canvas)
+        scrollbar = Scrollbar(measure_frame, orient ="vertical", command = self.canvas.yview)
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left")
+        self.canvas.create_window((0,0), window=int_measure_frame, anchor=tk.NW)
+        int_measure_frame.bind("<Configure>", self.configurefunction)
 
         self.measure_var_list = []
 
         for index, measure in enumerate(self.measurement_dict.keys()):
             self.measure_var_list.append(tk.IntVar(value=0))
-            ttk.Checkbutton(measure_frame, variable=self.measure_var_list[index],
+            ttk.Checkbutton(int_measure_frame, variable=self.measure_var_list[index],
                 text=measure).pack(fill='x')
             
         # Display 2D processing options
@@ -136,6 +145,8 @@ class OperaGUI:
 
         self.root.mainloop()
 
+    def configurefunction(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"), width=350, height=720)
     
     def get_directory(self, button):
         """Asks users to choose the source and saving directories."""
