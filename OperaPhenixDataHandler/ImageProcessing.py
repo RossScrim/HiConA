@@ -11,14 +11,9 @@ class ImageFOVHandler:
         pass
 
 class ImageProcessor:
-    def __init__(self, images, config):
+    def __init__(self, images):
         self.image_array = np.array(images)
-        self.image_x_dim = np.shape(self.image_array)
-        self.image_y_dim = np.shape(self.image_array)
-
-        self.num_planes = config["PLANES"]
-        self.num_channels = len(config["CHANNEL"])
-        self.timepoints = config["TIMEPOINTS"]
+        self.image_dim = np.ndim(self.image_array)
 
     def max_projection(self):
         self.image_array = np.max(self.image_array, axis=0)
@@ -29,13 +24,21 @@ class ImageProcessor:
         return self
     
     def convert_to_8bit(self):
-        image_8bit = []
-        for image in self.image_array:
-            image_8bit.append(np.uint8((image / np.max(image)) * 255))
+        if self.image_dim == 2:
+            self.image_array = self._convert_image_to_8bit(self.image_array)
 
-          # Stack the list back into a single numpy array
-        self.image_array = np.array(image_8bit)
+        elif self.image_dim == 3:
+            self.image_array = np.array([self._convert_image_to_8bit(image) for image in self.image_array])
+
+        elif self.image_dim == 4:
+            self.image_array = np.array([[self._convert_image_to_8bit(image)
+                                          for image in image_array] for image_array in self.image_array])
         return self
+
+    def _convert_image_to_8bit(self, image):
+        image_temp = (image - np.min(image)) / np.array(image)
+        image_temp = image_temp * 255
+        return image_temp.astype(np.uint8)
 
     def process(self, max_proj=False, min_proj=False, to_8bit=False):
         """Processes the image based on flags for specific operations."""
@@ -46,7 +49,7 @@ class ImageProcessor:
         if to_8bit:
             self.convert_to_8bit()
         return self  # Return self to allow method chaining
-    
+
     def get_image(self):
         return self.image_array
 

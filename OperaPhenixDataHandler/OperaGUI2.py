@@ -94,10 +94,20 @@ class OperaGUI:
         self.stitching_state = tk.IntVar()
 
         #TODO Names of keys should match ImageProcessing functions?
-        self.processing_options = {"convert_to_8bit": self.bit8_state, "timelapse_data": self.timelapse_state, "max_projection": self.maxproj_state,"min_projection":self.minproj_state, "stitching": self.stitching_state} # Add processing variable states to this list
-        self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit", variable=self.bit8_state).pack(fill='x')
-        self.maxproj_check = ttk.Checkbutton(option_frame, text="Perform maximum projection", variable=self.maxproj_state).pack(fill='x')
-        self.minproj_check = ttk.Checkbutton(option_frame, text="Perform minimum projection", variable=self.minproj_state).pack(fill='x')
+        self.processing_options = {"convert_to_8bit": self.bit8_state,
+                                   "timelapse_data": self.timelapse_state,
+                                   "max_projection": self.maxproj_state,
+                                   "min_projection": self.minproj_state,
+                                   "stitching": self.stitching_state}
+
+        # Add processing variable states to this list
+        self.bit8_check = ttk.Checkbutton(option_frame, text="Convert to 8-bit",
+                                          variable=self.bit8_state).pack(fill='x')
+        self.maxproj_check = ttk.Checkbutton(option_frame, text="Perform maximum projection",
+                                             variable=self.maxproj_state).pack(fill='x')
+        self.minproj_check = ttk.Checkbutton(option_frame, text="Perform minimum projection",
+                                             variable=self.minproj_state).pack(fill='x')
+
         #self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images", variable=self.stitching_state).pack(fill='x')
         """
         # Display 3D processing options
@@ -136,7 +146,8 @@ class OperaGUI:
         elif self.save_entry_text.get() == "":
             messagebox.showinfo(title="Missing Information", message="Please choose saving directory")
         elif self.src_entry_text.get() == self.save_entry_text.get():
-            messagebox.showinfo(title="Missing Information", message="Please choose a different saving directory from your source directory")
+            messagebox.showinfo(title="Missing Information",
+                                message="Please choose a different saving directory from your source directory")
         else:
             self.src_dir = self.src_entry_text.get()
             self.save_dir = self.save_entry_text.get()
@@ -146,7 +157,8 @@ class OperaGUI:
 
     def src_processing(self):
         self.measurement_dict = {}
-        for measurement in [f for f in os.listdir(self.src_dir) if (os.path.isdir(os.path.join(self.src_dir, f)) and f != "_configdata")]:
+        for measurement in [f for f in os.listdir(self.src_dir)
+                            if (os.path.isdir(os.path.join(self.src_dir, f))  and f != "_configdata")]:
             measurement_path = os.path.join(self.src_dir, measurement)
 
             files = self.get_file_paths(measurement_path)
@@ -181,7 +193,8 @@ class OperaGUI:
         # No 3D options added yet - add here when needed
         else:
             #TODO Is there a nicer way to create the measure_to_process list? 
-            self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
+            self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]]
+                                       for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
             for cur_measurement in self.measure_to_process:
@@ -200,7 +213,8 @@ class OperaProcessing:
         self.save_path = r"C:\Users\ewestlund\OneDrive - The Institute of Cancer Research\Desktop"
         self.save_dir = save_dir
         self.processes_to_run = processes_to_run # Dict with keys = process function name, and values = 0 or 1, indicating chosen processes
-        self.config_file = OperaExperimentConfigReader(self.files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
+        self.config_file = OperaExperimentConfigReader(
+            self.files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
         self.FOVs = self.config_file["FIELDS"]
         self.channels = len(self.config_file["CHANNEL"])
         self.planes = self.config_file["PLANES"]
@@ -236,14 +250,27 @@ class OperaProcessing:
 
                     try:
                         images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
-                        processor = ImageProcessor(images, self.config_file)
-                        processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
-                        tifffile.imwrite(cur_save+"/"+cur_well+"f"+str(cur_FOV)+".tiff", processor.get_image(), imagej=True, metadata={'axes':'CYX'})
+                        processor = ImageProcessor(images)
+                        processor.process(max_proj=self.processes_to_run["max_projection"],
+                                          to_8bit=self.processes_to_run["convert_to_8bit"],
+                                          min_proj=self.processes_to_run["min_projection"])
 
                     except ValueError as e:
                         print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
                         continue
-                    
+
+                    try:
+                        if np.ndim(processor.get_image()) == 4:
+                            tifffile.imwrite(cur_save + "/" + cur_well + "f" + str(cur_FOV) + ".tif",
+                                         processor.get_image(),
+                                         imagej=True, metadata={'axes': 'ZCYX'})
+                        else:
+                            tifffile.imwrite(cur_save + "/" + cur_well + "f" + str(cur_FOV) + ".tif",
+                                         processor.get_image(), imagej=True, metadata={'axes': 'CYX'})
+                    except Exception as e:
+                        print(f"An unexpected error {e} while saving data")
+                        continue
+
             else:
                 for cur_FOV in range(1, self.FOVs+1):
                     processed_image = []
@@ -254,8 +281,10 @@ class OperaProcessing:
 
                         try:
                             images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
-                            processor = ImageProcessor(images, self.config_file)
-                            processor.process(max_proj=self.processes_to_run["max_projection"], to_8bit=self.processes_to_run["convert_to_8bit"], min_proj=self.processes_to_run["min_projection"])
+                            processor = ImageProcessor(images)
+                            processor.process(max_proj=self.processes_to_run["max_projection"],
+                                              to_8bit=self.processes_to_run["convert_to_8bit"],
+                                              min_proj=self.processes_to_run["min_projection"])
                             processed_image.append(processor.get_image())
 
                         except ValueError as e:
@@ -263,7 +292,16 @@ class OperaProcessing:
                             continue
 
                     processed_images = np.array(processed_image)
-                    tifffile.imwrite(cur_save+"/"+cur_well + "f"+str(cur_FOV)+".tiff", processed_images, imagej=True, metadata={'axes':'TCYX'})
+                    try:
+                        if np.ndim(processed_images) == 5:
+                            tifffile.imwrite(cur_save+"/"+cur_well + "f"+str(cur_FOV)+".tif", processed_images,
+                                         imagej=True, metadata={'axes':'TZCYX'})
+                        else:
+                            tifffile.imwrite(cur_save + "/" + cur_well + "f" + str(cur_FOV) + ".tif", processed_images,
+                                         imagej=True, metadata={'axes': 'TCYX'})
+                    except Exception as e:
+                        print(f"An unexpected error {e} while saving data")
+                        continue
 
 
 if __name__ == "__main__":
