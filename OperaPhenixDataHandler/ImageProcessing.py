@@ -50,11 +50,11 @@ class ImageProcessor:
         print("in while-loop");
 		wait(5000);}
 		selectImage("Output");
-        run("Duplicate...", "Output-1");
-        selectImage("Output-1");
-        run("Gaussian Blur...", "sigma=100");
-        imageCalculator("Divide create 32-bit", "Output","Output-1");
-        selectImage("Result of Output");
+        //run("Duplicate...", "Output-1");
+        //selectImage("Output-1");
+        //run("Gaussian Blur...", "sigma=100");
+        //imageCalculator("Divide create 32-bit", "Output","Output-1");
+        //selectImage("Result of Output");
         run("16-bit");
         run("Enhance Contrast", "saturated=0.35");
         saveAs("Tiff", "C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf");
@@ -67,7 +67,7 @@ class ImageProcessor:
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
             if ch == bf_channel:
-                tifffile.imwrite("bf.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
+                tifffile.imwrite("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/bf.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
                 ij.py.run_macro(macro)
 

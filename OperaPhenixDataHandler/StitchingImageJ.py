@@ -146,7 +146,7 @@ class StitchingGUI:
         self.directoryframe.columnconfigure(1, weight=1)
         self.directoryframe.columnconfigure(2, weight=1)
 
-        self.src_label = ttk.Label(self.directoryframe, text="Source directory", font=("Segoe UI", 14))
+        self.src_label = ttk.Label(self.directoryframe, text="Measurement Directory", font=("Segoe UI", 14))
         self.src_label.grid(row=0, column=0, padx=10, pady=10)
 
         self.src_entry_text = tk.StringVar()
@@ -156,15 +156,12 @@ class StitchingGUI:
         self.src_button = ttk.Button(self.directoryframe, text="...", command=lambda: self.get_directory("src_button"))
         self.src_button.grid(row=0, column=2, padx=10, pady=10)
 
-        self.save_label = ttk.Label(self.directoryframe, text="Saving directory", font=("Segoe UI", 14))
-        self.save_label.grid(row=1, column=0, padx=10, pady=10)
+        self.src_label = ttk.Label(self.directoryframe, text="Stitching reference channel", font=("Segoe UI", 14))
+        self.src_label.grid(row=1, column=0, padx=10, pady=10)
 
-        self.save_entry_text = tk.StringVar()
-        self.save_selected = ttk.Entry(self.directoryframe, text=self.save_entry_text, width=70, state='readonly')
-        self.save_selected.grid(row=1, column=1, padx=10, pady=10)
-
-        self.save_button = ttk.Button(self.directoryframe, text="...", command=lambda: self.get_directory("save_button"))
-        self.save_button.grid(row=1, column=2, padx=10, pady=10)
+        self.stitch_ch_var = tk.IntVar()
+        self.stitch_ch = ttk.Entry(self.directoryframe, text=self.stitch_ch_var, width=10)
+        self.stitch_ch.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
         self.directoryframe.pack()
 
@@ -182,27 +179,34 @@ class StitchingGUI:
     def get_directory(self, button):
         """Asks users to choose the source and saving directories."""
         if button == "src_button":
-            src_dir = askdirectory(title="Choose directory for images to be processed")
+            src_dir = askdirectory(title="Choose the directory for measurement to be processed")
             self.src_entry_text.set(src_dir)
-        if button == "save_button":
-            save_dir = askdirectory(title="Choose saving directory for processed images")
-            self.save_entry_text.set(save_dir)
 
     def src_confirm(self):
         """Checks the choices have been made for directories and processing steps. """
         if self.src_entry_text.get() == "":
-            messagebox.showinfo(title="Missing Information", message="Please choose source directory")
-        elif self.save_entry_text.get() == "":
-            messagebox.showinfo(title="Missing Information", message="Please choose saving directory")
-        elif self.src_entry_text.get() == self.save_entry_text.get():
-            messagebox.showinfo(title="Missing Information", message="Please choose a different saving directory from your source directory")
+            messagebox.showinfo(title="Missing Information", message="Please choose the directory for the measurement to be processed.")
+        elif self.stitch_ch_var.get() == 0 or not isinstance(self.stitch_ch_var.get(), int):
+            messagebox.showinfo(title="Missing Information", message="Please indicate which channel to use for stitching reference.")
         else:
             self.src_dir = self.src_entry_text.get()
-            self.save_dir = self.save_entry_text.get()
+            self.stitch_ch = self.stitch_ch_var.get()
             self.root.destroy()
 
-            return self.src_dir, self.save_dir
+    def get_parameters(self):
+        return self.src_dir, self.stitch_ch        
 
 
 if __name__ == "__main__":
-    StitchProcessing("Z:/Florian/bce184b7-d089-418f-b0cd-57c5193941ef/r06c01")
+    """Run main to stitch all wells for one measurement. The measurement should already have been preprocessed with max/min/EDF projection."""
+    stitcher = StitchingGUI()
+    measurement_dir, stitch_ch = stitcher.get_parameters()
+
+    well_paths = [os.path.join(measurement_dir, w) for w in os.listdir(measurement_dir) if os.path.isdir(os.path.join(measurement_dir, w))]
+
+    for well_path in well_paths:
+        try:
+            StitchProcessing(well_path, stitch_ch)
+        except ValueError as e:
+            print(f"Error stitching well {well_path} with ValueError.")
+            continue

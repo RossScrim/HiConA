@@ -6,6 +6,10 @@ from cellpose import models, io, utils
 import numpy as np
 from skimage import io as skio
 import GPUtil
+import tkinter as tk
+import tkinter.ttk as ttk
+from tkinter import messagebox
+from tkinter.filedialog import askdirectory
 
 
 def cellpose_model():
@@ -32,8 +36,6 @@ def print_gpu_usage():
     gpus = GPUtil.getGPUs()
     for gpu in gpus:
         print(f"GPU ID: {gpu.id}, GPU Load: {gpu.load*100}%, Memory Used: {gpu.memoryUsed}MB, Memory Total: {gpu.memoryTotal}MB")
-
-
 
 
 def cellpose_segmentations(cur_well_path):
@@ -114,15 +116,11 @@ def cellpose_segmentations(cur_well_path):
         # Print GPU usage after processing each image
         print_gpu_usage()
 
-    
-
-
 
 def cellpose_organiser(measurement_path):                   
     # List to store filename, estimated diameter, and processing time
     diameter_data = []
     wells = [w for w in os.listdir(measurement_path) if os.path.isdir(os.path.join(measurement_path, w))]
-    print(wells)
 
     for well in wells:
         well_path = os.path.join(measurement_path, well)
@@ -139,5 +137,70 @@ def cellpose_organiser(measurement_path):
 
     print(f"Diameter data and processing times have been saved to {csv_file_path}")
 
+
+
+class CellposeGUI:
+    """GUI, getting input from user to run Opera processing."""
+    def __init__(self):
+        self.root = tk.Tk()
+
+        #self.root.geometry("800x150")
+        self.root.title("Stitching")
+
+         # Choose directories
+        self.directoryframe = tk.Frame(self.root)
+        self.directoryframe.columnconfigure(0, weight=1)
+        self.directoryframe.columnconfigure(1, weight=1)
+        self.directoryframe.columnconfigure(2, weight=1)
+
+        self.src_label = ttk.Label(self.directoryframe, text="Measurement Directory", font=("Segoe UI", 14))
+        self.src_label.grid(row=0, column=0, padx=10, pady=10)
+
+        self.src_entry_text = tk.StringVar()
+        self.src_selected = ttk.Entry(self.directoryframe, text=self.src_entry_text, width=70, state='readonly')
+        self.src_selected.grid(row=0, column=1, padx=10, pady=10)
+
+        self.src_button = ttk.Button(self.directoryframe, text="...", command=lambda: self.get_directory("src_button"))
+        self.src_button.grid(row=0, column=2, padx=10, pady=10)
+
+
+        self.directoryframe.pack()
+
+        # Confirm button
+        self.buttonframe = tk.Frame(self.root)
+        self.buttonframe.columnconfigure(0, weight=1)
+
+        self.confirm_button = ttk.Button(self.buttonframe, text="OK", command=self.src_confirm)
+        self.confirm_button.grid(row=0, column=0, padx=58, pady=10, sticky=tk.E)
+        
+        self.buttonframe.pack(fill='x')
+
+        self.root.mainloop()
+
+    def get_directory(self, button):
+        """Asks users to choose the source and saving directories."""
+        if button == "src_button":
+            src_dir = askdirectory(title="Choose the directory for measurement to be processed")
+            self.src_entry_text.set(src_dir)
+
+    def src_confirm(self):
+        """Checks the choices have been made for directories and processing steps. """
+        if self.src_entry_text.get() == "":
+            messagebox.showinfo(title="Missing Information", message="Please choose the directory for the measurement to be processed.")
+        else:
+            self.src_dir = self.src_entry_text.get()
+            self.root.destroy()
+
+    def get_parameters(self):
+        return self.src_dir        
+
+
 if __name__ == "__main__":
-    cellpose_organiser("Z:/Florian/bce184b7-d089-418f-b0cd-57c5193941ef")
+    """Run main to stitch all wells for one measurement. The measurement should already have been preprocessed with max/min/EDF projection."""
+    segmenter = CellposeGUI()
+    measurement_dir = segmenter.get_parameters()
+
+    try:
+        cellpose_organiser(measurement_dir)
+    except ValueError as e:
+        print(f"Error segmenting {measurement_dir} with ValueError.")
