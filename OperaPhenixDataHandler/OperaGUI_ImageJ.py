@@ -266,7 +266,10 @@ class OperaProcessing():
             self.files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
         
         self.FOVs = self.config_file["FIELDS"]
-        self.channels = len(self.config_file["CHANNEL"])
+        if type(self.config_file["CHANNEL"]) is list:
+            self.channels = len(self.config_file["CHANNEL"])
+        else:
+            self.channels = 1
         self.planes = self.config_file["PLANES"]
         self.timepoints = self.config_file["TIMEPOINTS"]
 
@@ -299,8 +302,16 @@ class OperaProcessing():
         return im_arr
 
     def get_stitching_order(self): #Need to figure out a smart way to do this
-        if self.stitch_height == 3 and self.stitch_width == 3:
+        if self.stitch_height == 2 and self.stitch_width == 2:
+            return ["01", "03", "04", "02"]
+        elif self.stitch_height == 3 and self.stitch_width == 3:
             return ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
+        elif self.stitch_height == 4 and self.stitch_width == 4:
+            return ["10", "01", "05", "09", "13", "14", "06", "02", "03", "07", "11", "15", "16", "12", "08", "04"]
+        elif self.stitch_height == 5 and self.stitch_width == 4:
+            return ["13", "01", "06", "11", "16", "21", "22", "17", "12", "07", "02", "03", "08", "18", "23", "24", "19", "14", "09", "04", "05", "10", "15", "20", "25"]
+        else:
+            print("WARNING: Stitching will not be performed correctly!")
         
     def run(self):
         for cur_well in self.files.well_names:
@@ -394,7 +405,7 @@ class OperaProcessing():
                     
         if self.processes_to_run["cellpose"] == 1:
             try:
-                cellpose_organiser(self.save_dir)
+                cellpose_organiser(self.save_dir, self.BFch)
             except:
                 print("Error segmenting with Cellpose.")
 

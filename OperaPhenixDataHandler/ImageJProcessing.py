@@ -143,6 +143,7 @@ class imageJProcessor:
 
         ij.py.run_macro(macro, arg)
 
+"""
 def main():
     processor = imageJProcessor()
     fiji_loc, plugins_loc, imageJ_options, macro_path, arg_path = processor.get_all_paths()
@@ -152,6 +153,8 @@ def main():
     processor.run()
 
 main()
+"""
+
 
 if __name__ == "main":
     processor = imageJProcessor()
