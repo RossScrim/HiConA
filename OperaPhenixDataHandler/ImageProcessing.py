@@ -2,6 +2,10 @@ import numpy as np
 import tifffile
 import imagej
 import scyjava
+import tempfile
+import re
+import os
+from tkinter.filedialog import askdirectory
 
 from ConfigReader import OperaExperimentConfigReader
 
@@ -24,7 +28,7 @@ class ImageProcessor:
         self.num_planes = config["PLANES"]
 
         if type(config["CHANNEL"]) is list:
-            self.num_channels = len(self.config_file["CHANNEL"])
+            self.num_channels = len(config["CHANNEL"])
         else:
             self.num_channels = 1
         self.timepoints = config["TIMEPOINTS"]
@@ -44,9 +48,18 @@ class ImageProcessor:
         ij = imagej.init("C:/Users/ewestlund/Fiji.app", mode="interactive") #Add path to Fiji.app folder
         ij.ui().showUI()
 
+        # Generate tempfile
+        temp_dir = tempfile.TemporaryDirectory()
+        bf_temp = os.path.join(temp_dir.name, "bf.tiff")
+        proc_temp = os.path.join(temp_dir.name, "proc.tif")
+        print(bf_temp, proc_temp)
+
         #In the macro, change where the bf.tiff is stored and where the processed_bf should be saved.
         macro = """
-        open("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/bf.tiff"); 
+        @ String BFImagePath
+        @ String procImagePath
+
+        open(BFImagePath); 
         print("image opened");
         run("EDF Easy mode", "quality='2' topology='0' show-topology='off' show-view='off'");
         print("EDF run");
@@ -61,22 +74,27 @@ class ImageProcessor:
         //selectImage("Result of Output");
         run("16-bit");
         run("Enhance Contrast", "saturated=0.35");
-        saveAs("Tiff", "C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf");
+        saveAs("Tiff", procImagePath);
         print("saved");
         close("*");
         """
+
+        arg = {
+            "BFImagePath": bf_temp,
+            "procImagePath": proc_temp
+        }
 
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
         bf_channel = BF_ch #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
             if ch == bf_channel:
-                tifffile.imwrite("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/bf.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
+                tifffile.imwrite(bf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
-                ij.py.run_macro(macro)
+                ij.py.run_macro(macro, arg)
 
                 bf_array = []
-                bf_array.append(tifffile.imread("C:/Users/ewestlund/Documents/Python/Opera Phenix/operavenv/processed_bf.tif")) #Change where the processed_bf.tif is saved.
+                bf_array.append(tifffile.imread(proc_temp)) #Change where the processed_bf.tif is saved.
                 bf_array = np.array(bf_array)
 
                 processed_image[ch] = bf_array
@@ -91,6 +109,7 @@ class ImageProcessor:
         self.image_array = array_clipped.astype(necessary_type)
 
         ij.dispose()
+        temp_dir.cleanup()
         return self
 
     def convert_to_8bit(self):
@@ -120,11 +139,52 @@ class ImageProcessor:
 
 
 if __name__ == "__main__":
-    opera_config = OperaExperimentConfigReader("b02fd523-9bf7-4462-8f31.kw.txt")
+    measurement_path = askdirectory(title='Choose measurement directory')
+    saving_path = askdirectory(title='Choose saving directory')
+
+    in_measurement_path = [f for f in os.listdir(measurement_path) if not os.path.isdir(f)]
+    kw_file = next(x for x in in_measurement_path if x.endswith(".kw.txt"))
+
+    opera_config = OperaExperimentConfigReader(os.path.join(measurement_path, kw_file))
     opera_config_file = opera_config.load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
 
-    test_images = tifffile.imread("C:\\Users\\rscrimgeour\\Videos\\Test_stack.tif")
-    images = ImageProcessor(test_images, opera_config_file).process(max_proj=True, to_8bit=True).get_image()
+    planes = opera_config_file["PLANES"]
+    channels = len(opera_config_file["CHANNEL"])
+    fields = opera_config_file["FIELDS"]
+
+    image_path = os.path.join(measurement_path, "images")
+    wells = [w for w in os.listdir(image_path) if os.path.isdir(os.path.join(image_path, w))]
+
+    # Choose which well to test
+    well_num = 0
+    test_image_path = os.path.join(image_path, wells[well_num])
+    
+    for i in range(1, fields+1):
+        cur_FOV = i
+        pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
+
+        matched_string = [match.group() for file_name in sorted(os.listdir(test_image_path)) if
+                                 (match := re.search(pattern, file_name))]
+
+        im_arr_names = [os.path.join(test_image_path, matched_string[i]) for i in range(len(matched_string))]
+        im_arr = []
+        
+        for filepath in im_arr_names:
+            im_arr.append(tifffile.imread(filepath))
+            if len(im_arr) == 1:
+                xdim = len(im_arr[0][1])
+                ydim = len(im_arr[0][0])
+        im_arr = np.array(im_arr)
+
+        images = np.reshape(im_arr, [planes, channels, xdim, ydim])
+        
+        processor = ImageProcessor(images, opera_config_file)
+
+        processor.process(edf_proj=1, edf_BFch=2)
+        images = processor.get_image()
+
+        tifffile.imwrite(saving_path + f"/{wells[well_num]}_{i}.tif",
+                                         processor.get_image(), imagej=True, metadata={'axes': 'CYX'})
                                 
     
     
