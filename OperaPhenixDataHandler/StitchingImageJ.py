@@ -97,10 +97,10 @@ def mergeImages(orgDir, wellName, ij):
 
     ij.py.run_macro(macro, args)
 
-def StitchProcessing(well_path, BFch):
-    plugins_dir = "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
+def StitchProcessing(well_path, BFch, imagej_loc):
+    plugins_dir = os.path.join(imagej_loc, "plugins") # "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
     scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-    ij = imagej.init("C:/Users/ewestlund/Fiji.app")#, mode="interactive") #Add path to Fiji.app folder
+    ij = imagej.init(imagej_loc) # "C:/Users/ewestlund/Fiji.app")#, mode="interactive") #Add path to Fiji.app folder
     #ij.ui().showUI()
 
     wellName = os.path.basename(os.path.normpath(well_path))
@@ -164,6 +164,16 @@ class StitchingGUI:
         self.stitch_ch = ttk.Entry(self.directoryframe, text=self.stitch_ch_var, width=10)
         self.stitch_ch.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
+        self.imagej_label = ttk.Label(self.directoryframe, text="Fiji.app Directory", font=("Segoe UI", 14))
+        self.src_label.grid(row=2, column=0, padx=10, pady=10)
+
+        self.imagej_entry_text = tk.StringVar()
+        self.imagej_selected = ttk.Entry(self.directoryframe, text=self.imagej_entry_text, width=70, state='readonly')
+        self.imagej_selected.grid(row=2, column=1, padx=10, pady=10)
+
+        self.imagej_button = ttk.Button(self.directoryframe, text="...", command=lambda: self.get_directory("imagej_button"))
+        self.imagej_button.grid(row=2, column=2, padx=10, pady=10)
+
         self.directoryframe.pack()
 
         # Confirm button
@@ -182,6 +192,9 @@ class StitchingGUI:
         if button == "src_button":
             src_dir = askdirectory(title="Choose the directory for measurement to be processed")
             self.src_entry_text.set(src_dir)
+        if button == "imagej_button":
+            imagej_dir = askdirectory(title="Choose location for Fiji.app")
+            self.imagej_entry_text.set(imagej_dir)
 
     def src_confirm(self):
         """Checks the choices have been made for directories and processing steps. """
@@ -189,25 +202,28 @@ class StitchingGUI:
             messagebox.showinfo(title="Missing Information", message="Please choose the directory for the measurement to be processed.")
         elif self.stitch_ch_var.get() == 0 or not isinstance(self.stitch_ch_var.get(), int):
             messagebox.showinfo(title="Missing Information", message="Please indicate which channel to use for stitching reference.")
+        elif self.imagej_entry_text.get() == "":
+            messagebox.showinfo(title="Missing Information", message="Please choose the location for the Fiji.app directory.")
         else:
             self.src_dir = self.src_entry_text.get()
             self.stitch_ch = self.stitch_ch_var.get()
+            self.imagej_loc = self.imagej_entry_text.get()
             self.root.destroy()
 
     def get_parameters(self):
-        return self.src_dir, self.stitch_ch        
+        return self.src_dir, self.stitch_ch, self.imagej_loc        
 
 
 if __name__ == "__main__":
     """Run main to stitch all wells for one measurement. The measurement should already have been preprocessed with max/min/EDF projection."""
     stitcher = StitchingGUI()
-    measurement_dir, stitch_ch = stitcher.get_parameters()
+    measurement_dir, stitch_ch, imagej_loc = stitcher.get_parameters()
 
     well_paths = [os.path.join(measurement_dir, w) for w in os.listdir(measurement_dir) if os.path.isdir(os.path.join(measurement_dir, w))]
 
     for well_path in well_paths:
         try:
-            StitchProcessing(well_path, stitch_ch)
+            StitchProcessing(well_path, stitch_ch, imagej_loc)
         except ValueError as e:
             print(f"Error stitching well {well_path} with ValueError.")
             continue

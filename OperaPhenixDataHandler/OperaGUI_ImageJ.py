@@ -3,9 +3,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import numpy as np
 from tkinter import messagebox, Scrollbar, Canvas
-from tkinter.filedialog import askdirectory
+from tkinter.filedialog import askdirectory, askopenfilename
 import re
 import os
+import pickle
+import json
 
 from ConfigReader import OperaExperimentConfigReader
 from FileManagement import FilePathHandler
@@ -17,6 +19,12 @@ from ImageJProcessing import imageJProcessor
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
     def __init__(self):
+        self.cur_py_dir = os.path.dirname(__file__)
+        self.save_variables_file = os.path.join(self.cur_py_dir, "saved_variables.json")
+        if os.path.isfile(self.save_variables_file):
+            with open(self.save_variables_file, "r+") as f:
+                self.saved_var = json.load(f)
+
         self.src_window()
 
         self.process_window()
@@ -29,14 +37,18 @@ class OperaGUI:
 
          # Choose directories
         self.directoryframe = tk.Frame(self.root)
-        self.directoryframe.columnconfigure(0, weight=1)
-        self.directoryframe.columnconfigure(1, weight=1)
-        self.directoryframe.columnconfigure(2, weight=1)
+        #self.directoryframe.columnconfigure(0, weight=1)
+        #self.directoryframe.columnconfigure(1, weight=1)
+        #self.directoryframe.columnconfigure(2, weight=1)
 
         self.src_label = ttk.Label(self.directoryframe, text="Source directory", font=("Segoe UI", 14))
         self.src_label.grid(row=0, column=0, padx=10, pady=10)
 
         self.src_entry_text = tk.StringVar()
+        try:
+            self.src_entry_text.set(self.saved_var["src_entry_text"])
+        except:
+            pass
         self.src_selected = ttk.Entry(self.directoryframe, text=self.src_entry_text, width=70, state='readonly')
         self.src_selected.grid(row=0, column=1, padx=10, pady=10)
 
@@ -47,6 +59,10 @@ class OperaGUI:
         self.save_label.grid(row=1, column=0, padx=10, pady=10)
 
         self.save_entry_text = tk.StringVar()
+        try:
+            self.save_entry_text.set(self.saved_var["save_entry_text"])
+        except:
+            pass
         self.save_selected = ttk.Entry(self.directoryframe, text=self.save_entry_text, width=70, state='readonly')
         self.save_selected.grid(row=1, column=1, padx=10, pady=10)
 
@@ -69,11 +85,12 @@ class OperaGUI:
     def process_window(self):
         self.root = tk.Tk()
 
-        self.root.geometry("780x800")
+        self.root.geometry("800x800")
         self.root.title("Processing Selection")
 
         ttk.Label(self.root, text='Measurements', font=("Segoe UI", 14)).grid(column=0, row=0, padx=20, pady=0)
-        ttk.Label(self.root, text='2D Processing Options', font=("Segoe UI", 14)).grid(column=1, row=0, padx=20, pady=0)
+        ttk.Label(self.root, text='2D Processing Options', font=("Segoe UI", 14)).grid(column=1, row=0, padx=70, pady=0, sticky=tk.W)
+        #self.imageJ_Label = ttk.Label(self.root, text='ImageJ Options', font=("Segoe UI", 14))
         #ttk.Label(self.root, text='3D Processing Options', font=("Segoe UI", 14)).grid(column=2, row=0, padx=20, pady=0)
 
         # Display the available measurements
@@ -96,9 +113,11 @@ class OperaGUI:
             ttk.Checkbutton(int_measure_frame, variable=self.measure_var_list[index],
                 text=measure).pack(fill='x')
             
+
         # Display 2D processing options
-        option_frame = tk.Frame(self.root)
-        option_frame.grid(column=1, row=1, padx=5, sticky=tk.N)
+        option_frame = tk.Frame(self.root, width=500)
+        option_frame.grid(column=1, row=1, padx=5, sticky=tk.NW)
+        option_frame.propagate(0)
 
         self.bit8_state = tk.IntVar()
         #self.timelapse_state = tk.IntVar()
@@ -130,10 +149,10 @@ class OperaGUI:
                                              variable=self.minproj_state).grid(row=2, column=0, sticky=tk.W)
 
         self.edfproj_check = ttk.Checkbutton(option_frame, text="Perform EDF projection on BF channel", 
-                                             variable=self.edfproj_state).grid(row=3, column=0, sticky=tk.W)
+                                             variable=self.edfproj_state, command=self.show_imagej_frame).grid(row=3, column=0, sticky=tk.W)
         self.edfproj_BFch_var = tk.IntVar()
-        edfproj_BF_label = ttk.Label(option_frame, text="BF channel number:").grid(row=4, column=0, sticky=tk.EW, padx=18)
-        self.edfproj_BFch_entry = ttk.Entry(option_frame, text=self.edfproj_BFch_var, width=2, background='White').grid(row=4, column=0, sticky=tk.EW, padx=133)
+        edfproj_BF_label = ttk.Label(option_frame, text="BF channel number:", width=2).grid(row=4, column=0, sticky=tk.EW, padx=18)
+        self.edfproj_BFch_entry = ttk.Entry(option_frame, text=self.edfproj_BFch_var, width=2, background='White').grid(row=4, column=0, sticky=tk.W, padx=133)
 
         self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images (width x height)", 
                                                variable=self.stitching_state).grid(row=5, column=0, sticky=tk.W)
@@ -147,8 +166,54 @@ class OperaGUI:
                                               variable=self.cellpose_state).grid(row=7, column=0, sticky=tk.W)
 
         self.imagej_check = ttk.Checkbutton(option_frame, text="Run ImageJ Macro",
-                                            variable=self.imagej_state).grid(row=8, column=0, sticky=tk.W)
+                                            variable=self.imagej_state, command=self.show_imagej_frame).grid(row=8, column=0, sticky=tk.W)
+        
 
+        # Frame for imageJ location - only activates when user has ticked on EDF processing or ImageJ Script
+        self.imagej_frame = tk.Frame(option_frame, width=550)
+        self.macro_selection_frame = tk.Frame(option_frame, width=550)
+
+        ttk.Label(self.imagej_frame, text='ImageJ Options', font=("Segoe UI", 14)).grid(row=0, column=1, padx=0, sticky=tk.NW)
+        self.imagej_label = ttk.Label(self.imagej_frame, text="Fiji.app directory    ").grid(row=1, column=0, padx=0, pady=10, sticky=tk.W)
+
+        self.imagej_entry_text = tk.StringVar()
+        try:
+            self.imagej_entry_text.set(self.saved_var["imagej_entry_text"])
+        except:
+            pass
+        self.imagej_selected = ttk.Entry(self.imagej_frame, text=self.imagej_entry_text, width=25, state='readonly')
+        self.imagej_selected.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
+
+        self.imagej_button = ttk.Button(self.imagej_frame, text="...", command=lambda: self.get_directory("imagej_button"), width=5)
+        self.imagej_button.grid(row=1, column=2, padx=0, pady=5, sticky=tk.W)
+
+        # For macro and arguments files selection
+        self.interactive_state = tk.IntVar()
+        self.interactive_check = ttk.Checkbutton(self.macro_selection_frame, text="Interactive mode", variable=self.interactive_state)
+        self.interactive_check.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+
+        self.macro_label = ttk.Label(self.macro_selection_frame, text="ImageJ macro").grid(row=1, column=0, padx=0, pady=5, sticky=tk.W)
+
+        self.macro_entry_text = tk.StringVar()
+        self.macro_selected = ttk.Entry(self.macro_selection_frame, text=self.macro_entry_text, width=25, state='readonly')
+        self.macro_selected.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
+
+        self.macro_button = ttk.Button(self.macro_selection_frame, text="...", command=lambda: self.get_directory("macro_button"), width=5)
+        self.macro_button.grid(row=1, column=2, padx=0, pady=5, sticky=tk.W)
+
+        self.arg_label = ttk.Label(self.macro_selection_frame, text="ImageJ Arguments").grid(row=2, column=0, padx=0, pady=5, sticky=tk.W)
+
+        self.arg_entry_text = tk.StringVar()
+        self.arg_selected = ttk.Entry(self.macro_selection_frame, text=self.arg_entry_text, width=25, state='readonly')
+        self.arg_selected.grid(row=2, column=1, padx=5, pady=5, sticky=tk.W)
+
+        self.arg_button = ttk.Button(self.macro_selection_frame, text="...", command=lambda: self.get_directory("arg_button"), width=5)
+        self.arg_button.grid(row=2, column=2, padx=0, pady=5, sticky=tk.W)
+
+        self.imagej_process_label = ttk.Label(self.macro_selection_frame, text="Apply macro").grid(row=3, column=0, sticky=tk.W)
+        self.imagej_order_text = tk.StringVar()
+        self.imagej_combobox = ttk.Combobox(self.macro_selection_frame, textvariable=self.imagej_order_text, state='readonly', values=["to stack", "after MIP/EDF", "after stitching"])
+        self.imagej_combobox.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
 
         #Add 3D options here
         """
@@ -165,12 +230,27 @@ class OperaGUI:
         """
         # Confirm button
         self.buttonframe = tk.Frame(self.root)
-        self.buttonframe.grid(column=2, row=2)
+        self.buttonframe.grid(column=2, row=2, sticky=tk.N)
 
         self.confirm_button = ttk.Button(self.buttonframe, text="OK", command=self.proc_confirm)
-        self.confirm_button.grid(row=0, column=0, padx=5, pady=10, sticky=tk.E)
+        self.confirm_button.grid(row=0, column=0, padx=0, pady=10, sticky=tk.W)
 
         self.root.mainloop()
+
+    def show_imagej_frame(self):
+            edf = self.edfproj_state.get()
+            imagej = self.imagej_state.get()
+
+            if edf == 1 or imagej == 1:
+                self.imagej_frame.grid(column=0, row=9, sticky=tk.NW)
+                if imagej == 1:
+                    self.macro_selection_frame.grid(column=0, row=10, sticky=tk.NW)
+                else:
+                    self.macro_selection_frame.grid_forget()
+            else:
+                self.imagej_frame.grid_forget()
+                self.macro_selection_frame.grid_forget()
+
 
     def configurefunction(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"), width=350, height=720)
@@ -183,6 +263,15 @@ class OperaGUI:
         if button == "save_button":
             save_dir = askdirectory(title="Choose saving directory for processed images")
             self.save_entry_text.set(save_dir)
+        if button == "imagej_button":
+            imagej_dir = askdirectory(title="Choose location for Fiji.app directory")
+            self.imagej_entry_text.set(imagej_dir)
+        if button == "macro_button":
+            macro_file = askopenfilename(title="Choose location for ImageJ macro file")
+            self.macro_entry_text.set(macro_file)
+        if button == "arg_button":
+            arg_file = askopenfilename(title="Choose location for ImageJ arguments file")
+            self.arg_entry_text.set(arg_file)
 
     def src_confirm(self):
         """Checks the choices have been made for directories and processing steps. """
@@ -237,12 +326,33 @@ class OperaGUI:
         #No 3D options added yet - add here when needed
         elif self.edfproj_state.get() == 1 and (not isinstance(self.edfproj_BFch_var.get(), int) or self.edfproj_BFch_var.get() == 0):
             messagebox.showinfo(title="Missing Information", message="Please provide the BF channel number")
+        elif (self.edfproj_state.get() == 1 or self.imagej_state.get() == 1) and self.imagej_entry_text.get() == "":
+            messagebox.showinfo(title="Missing Information", message="Please choose the location for the Fiji.app directory")
+        elif (self.imagej_state.get() == 1) and (self.macro_entry_text.get() == "" or self.arg_entry_text.get() == ""):
+            messagebox.showinfo(title="Missing Information", message="Please choose the location for the ImageJ macro and arguments files")
+        elif self.imagej_state.get() == 1 and self.imagej_order_text.get() == "":
+            messagebox.showinfo(title="Missing Information", message="Please choose when the macro should be applied in the dropdown menu.")
         elif self.stitching_state.get() == 1 and (not isinstance(self.stitching_var_width.get(), int) or self.stitching_var_width.get()==0 or not isinstance(self.stitching_var_height.get(), int) or self.stitching_var_height.get()==0):
             messagebox.showinfo(title="Missing Information", message="Please provide the dimensions for the stitched image")
         else:
+
+            if self.edfproj_state.get() == 1 or self.imagej_state.get() == 1:
+                self.imagej_loc = self.imagej_entry_text.get()
             if self.imagej_state.get() == 1:
-                self.imagej_processor = imageJProcessor()
-            #TODO Is there a nicer way to create the measure_to_process list? 
+                self.imagej_macro = self.macro_entry_text.get()
+                self.imagej_arg = self.arg_entry_text.get()
+                self.interactive_mode = self.interactive_state.get()
+                imagej_dict = {"fiji_loc": self.imagej_loc, "macro_file": self.imagej_macro, "args_file": self.imagej_arg, "interactive": self.interactive_mode}
+                # Open this file when running ImageJ processor
+                self.imagej_config_file = os.path.join(self.cur_py_dir, "imagej_config.json")
+                with open(self.imagej_config_file, "w+") as f:
+                    json.dump(imagej_dict, f)
+
+            # Save used variables using json for next run
+            var_dict = {"src_entry_text": self.src_dir, "save_entry_text": self.save_dir, "imagej_entry_text": self.imagej_loc}
+            with open(self.save_variables_file, "w+") as f:
+                json.dump(var_dict, f)
+
             self.measure_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
             self.processes_to_run = {k:v.get() for k, v in self.processing_options.items()}
             self.root.destroy()
@@ -252,16 +362,25 @@ class OperaGUI:
                 cur_save_dir = os.path.join(self.save_dir, cur_plate_name)
                 if not os.path.exists(cur_save_dir):
                     os.makedirs(cur_save_dir)
-                OperaProcessing(cur_files, self.processes_to_run, cur_save_dir, BFchannel=int(self.edfproj_BFch_var.get()), stitch_width=int(self.stitching_var_width.get()), stitch_height=int(self.stitching_var_height.get()))
+                OperaProcessing(cur_files,
+                                self.processes_to_run,
+                                cur_save_dir,
+                                BFchannel=int(self.edfproj_BFch_var.get()),
+                                stitch_width=int(self.stitching_var_width.get()),
+                                stitch_height=int(self.stitching_var_height.get()),
+                                imagej_loc=self.imagej_entry_text.get(),
+                                imagej_proc_order=self.imagej_order_text.get())
 
 
 class OperaProcessing():
     """Performs the specified processing steps on the measurements selected from the GUI."""
-    def __init__(self, files, processes_to_run, save_dir, BFchannel=0, stitch_width=0, stitch_height=0):
+    def __init__(self, files, processes_to_run, save_dir, BFchannel=0, stitch_width=0, stitch_height=0, imagej_loc="", imagej_proc_order=""):
 
         self.files = files
         self.save_dir = save_dir
         self.processes_to_run = processes_to_run # Dict with keys = process function name, and values = 0 or 1, indicating chosen processes
+        self.imagej_loc = imagej_loc
+        self.imagej_proc_order = imagej_proc_order
         self.config_file = OperaExperimentConfigReader(
             self.files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
         
@@ -308,7 +427,7 @@ class OperaProcessing():
             return ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
         elif self.stitch_height == 4 and self.stitch_width == 4:
             return ["10", "01", "05", "09", "13", "14", "06", "02", "03", "07", "11", "15", "16", "12", "08", "04"]
-        elif self.stitch_height == 5 and self.stitch_width == 4:
+        elif self.stitch_height == 5 and self.stitch_width == 5:
             return ["13", "01", "06", "11", "16", "21", "22", "17", "12", "07", "02", "03", "08", "18", "23", "24", "19", "14", "09", "04", "05", "10", "15", "20", "25"]
         else:
             print("WARNING: Stitching will not be performed correctly!")
@@ -331,7 +450,9 @@ class OperaProcessing():
                                           to_8bit=self.processes_to_run["convert_to_8bit"], 
                                           min_proj=self.processes_to_run["min_projection"], 
                                           edf_proj=self.processes_to_run["EDF_projection"], 
-                                          edf_BFch=self.BFch-1)
+                                          edf_BFch=self.BFch-1,
+                                          imagej_loc=self.imagej_loc,
+                                          imagej_proc_order = self.imagej_proc_order)
 
                     except ValueError as e:
                         print("Error processing well " + cur_well + " field " + str(cur_FOV) + " with ValueError.")
@@ -366,6 +487,8 @@ class OperaProcessing():
                     except ValueError as e:
                         print("Error stitching well " + cur_well + " with ValueError.")
                         continue
+
+                #TODO Add imagej processing after stitching!
                     
             else:
                 for cur_FOV in range(1, self.FOVs+1):
@@ -382,7 +505,8 @@ class OperaProcessing():
                             processor = ImageProcessor(images, self.config_file)
                             processor.process(max_proj=self.processes_to_run["max_projection"], 
                                               to_8bit=self.processes_to_run["convert_to_8bit"], 
-                                              min_proj=self.processes_to_run["min_projection"])
+                                              min_proj=self.processes_to_run["min_projection"],
+                                              imagej_proc_order = self.imagej_proc_order)
                             processed_image.append(processor.get_image())
 
                         except ValueError as e:
