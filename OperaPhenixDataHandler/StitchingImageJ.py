@@ -157,15 +157,15 @@ class StitchingGUI:
         self.src_button = ttk.Button(self.directoryframe, text="...", command=lambda: self.get_directory("src_button"))
         self.src_button.grid(row=0, column=2, padx=10, pady=10)
 
-        self.src_label = ttk.Label(self.directoryframe, text="Stitching reference channel", font=("Segoe UI", 14))
-        self.src_label.grid(row=1, column=0, padx=10, pady=10)
+        self.stitch_ch_label = ttk.Label(self.directoryframe, text="Stitching reference channel", font=("Segoe UI", 14))
+        self.stitch_ch_label.grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
 
         self.stitch_ch_var = tk.IntVar()
         self.stitch_ch = ttk.Entry(self.directoryframe, text=self.stitch_ch_var, width=10)
         self.stitch_ch.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
 
         self.imagej_label = ttk.Label(self.directoryframe, text="Fiji.app Directory", font=("Segoe UI", 14))
-        self.src_label.grid(row=2, column=0, padx=10, pady=10)
+        self.imagej_label.grid(row=2, column=0, padx=10, pady=10)
 
         self.imagej_entry_text = tk.StringVar()
         self.imagej_selected = ttk.Entry(self.directoryframe, text=self.imagej_entry_text, width=70, state='readonly')
