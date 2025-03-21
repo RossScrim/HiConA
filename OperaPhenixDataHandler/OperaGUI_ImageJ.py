@@ -482,7 +482,7 @@ class OperaProcessing():
 
                 if self.processes_to_run["stitching"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == len(self.FOV_rename_order):
                     try:    
-                        StitchProcessing(cur_save, self.BFch)
+                        StitchProcessing(cur_save, self.BFch, self.imagej_loc)
             
                     except ValueError as e:
                         print("Error stitching well " + cur_well + " with ValueError.")
