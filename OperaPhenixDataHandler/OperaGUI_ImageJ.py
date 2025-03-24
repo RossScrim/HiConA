@@ -14,7 +14,7 @@ from FileManagement import FilePathHandler
 from ImageProcessing import ImageProcessor
 from StitchingImageJ import StitchProcessing
 from CellposeSegmentation import cellpose_organiser
-from ImageJProcessing import imageJProcessor
+from ImageJAfterStitching import ImageJProcessor
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
@@ -124,6 +124,7 @@ class OperaGUI:
         self.maxproj_state = tk.IntVar()
         self.minproj_state = tk.IntVar()
         self.edfproj_state = tk.IntVar()
+        self.separate_ch_state = tk.IntVar()
         self.stitching_state = tk.IntVar()
         self.cellpose_state = tk.IntVar()
         self.imagej_state = tk.IntVar()
@@ -132,7 +133,8 @@ class OperaGUI:
         self.processing_options = {"convert_to_8bit": self.bit8_state, 
                                    "max_projection": self.maxproj_state,
                                    "min_projection":self.minproj_state, 
-                                   "EDF_projection":self.edfproj_state, 
+                                   "EDF_projection":self.edfproj_state,
+                                   "separate_ch":self.separate_ch_state,
                                    "stitching": self.stitching_state, 
                                    "cellpose": self.cellpose_state,
                                    "ImageJ": self.imagej_state} # Add processing variable states to this list
@@ -154,19 +156,25 @@ class OperaGUI:
         edfproj_BF_label = ttk.Label(option_frame, text="BF channel number:", width=2).grid(row=4, column=0, sticky=tk.EW, padx=18)
         self.edfproj_BFch_entry = ttk.Entry(option_frame, text=self.edfproj_BFch_var, width=2, background='White').grid(row=4, column=0, sticky=tk.W, padx=133)
 
+        self.separate_ch_check = ttk.Checkbutton(option_frame, text="Separate image channels",
+                                                 variable=self.separate_ch_state).grid(row=5, column=0, sticky=tk.W)
+
         self.stitching_check = ttk.Checkbutton(option_frame, text="Stitch images (width x height)", 
-                                               variable=self.stitching_state).grid(row=5, column=0, sticky=tk.W)
+                                               variable=self.stitching_state).grid(row=6, column=0, sticky=tk.W)
         self.stitching_var_width = tk.IntVar()
         self.stitching_var_height = tk.IntVar()
-        self.stitching_entry = ttk.Entry(option_frame, text=self.stitching_var_width, width=2, background='White').grid(row=6, column=0, sticky=tk.W, padx=20)
-        stitching_label = ttk.Label(option_frame, text="x").grid(row=6, column=0, sticky=tk.W, padx=40)
-        self.stitching_entry = ttk.Entry(option_frame, text=self.stitching_var_height, width=2, background='White').grid(row=6, column=0, sticky=tk.W, padx=52)
+        self.stitching_entry = ttk.Entry(option_frame, text=self.stitching_var_width, width=2, background='White').grid(row=7, column=0, sticky=tk.W, padx=20)
+        stitching_label = ttk.Label(option_frame, text="x").grid(row=7, column=0, sticky=tk.W, padx=40)
+        self.stitching_entry = ttk.Entry(option_frame, text=self.stitching_var_height, width=2, background='White').grid(row=7, column=0, sticky=tk.W, padx=52)
+        self.stitch_ref_var = tk.IntVar()
+        stitch_ref_label = ttk.Label(option_frame, text="Stitch ref channel:").grid(row=8, column=0, sticky=tk.W, padx=18)
+        self.stitch_ref_entry = ttk.Entry(option_frame, text=self.stitch_ref_var, width=2, background="White").grid(row=8, column=0, padx=133, sticky=tk.W)
         
         self.cellpose_check = ttk.Checkbutton(option_frame, text="Perform cellpose segmentation", 
-                                              variable=self.cellpose_state).grid(row=7, column=0, sticky=tk.W)
+                                              variable=self.cellpose_state).grid(row=9, column=0, sticky=tk.W)
 
         self.imagej_check = ttk.Checkbutton(option_frame, text="Run ImageJ Macro",
-                                            variable=self.imagej_state, command=self.show_imagej_frame).grid(row=8, column=0, sticky=tk.W)
+                                            variable=self.imagej_state, command=self.show_imagej_frame).grid(row=10, column=0, sticky=tk.W)
         
 
         # Frame for imageJ location - only activates when user has ticked on EDF processing or ImageJ Script
@@ -195,6 +203,10 @@ class OperaGUI:
         self.macro_label = ttk.Label(self.macro_selection_frame, text="ImageJ macro").grid(row=1, column=0, padx=0, pady=5, sticky=tk.W)
 
         self.macro_entry_text = tk.StringVar()
+        try:
+            self.macro_entry_text.set(self.saved_var["macro"])
+        except:
+            pass
         self.macro_selected = ttk.Entry(self.macro_selection_frame, text=self.macro_entry_text, width=25, state='readonly')
         self.macro_selected.grid(row=1, column=1, padx=5, pady=5, sticky=tk.W)
 
@@ -204,6 +216,10 @@ class OperaGUI:
         self.arg_label = ttk.Label(self.macro_selection_frame, text="ImageJ Arguments").grid(row=2, column=0, padx=0, pady=5, sticky=tk.W)
 
         self.arg_entry_text = tk.StringVar()
+        try:
+            self.arg_entry_text.set(self.saved_var["arg"])
+        except:
+            pass
         self.arg_selected = ttk.Entry(self.macro_selection_frame, text=self.arg_entry_text, width=25, state='readonly')
         self.arg_selected.grid(row=2, column=1, padx=5, pady=5, sticky=tk.W)
 
@@ -251,9 +267,9 @@ class OperaGUI:
             imagej = self.imagej_state.get()
 
             if edf == 1 or imagej == 1:
-                self.imagej_frame.grid(column=0, row=9, sticky=tk.NW)
+                self.imagej_frame.grid(column=0, row=11, sticky=tk.NW)
                 if imagej == 1:
-                    self.macro_selection_frame.grid(column=0, row=10, sticky=tk.NW)
+                    self.macro_selection_frame.grid(column=0, row=12, sticky=tk.NW)
                 else:
                     self.macro_selection_frame.grid_forget()
             else:
@@ -343,6 +359,8 @@ class OperaGUI:
             messagebox.showinfo(title="Missing Information", message="Please choose when the macro should be applied in the dropdown menu.")
         elif self.stitching_state.get() == 1 and (not isinstance(self.stitching_var_width.get(), int) or self.stitching_var_width.get()==0 or not isinstance(self.stitching_var_height.get(), int) or self.stitching_var_height.get()==0):
             messagebox.showinfo(title="Missing Information", message="Please provide the dimensions for the stitched image")
+        elif self.stitching_state.get() == 1 and (not isinstance(self.stitch_ref_var.get(), int) or self.stitch_ref_var.get() == 0):
+            messagebox.showinfo(title="Missing Information", message="Please provide the stitching reference channel number")
         else:
 
             if self.edfproj_state.get() == 1 or self.imagej_state.get() == 1:
@@ -358,7 +376,7 @@ class OperaGUI:
                     json.dump(imagej_dict, f)
 
             # Save used variables using json for next run
-            var_dict = {"src_entry_text": self.src_dir, "save_entry_text": self.save_dir, "imagej_entry_text": self.imagej_loc}
+            var_dict = {"src_entry_text": self.src_dir, "save_entry_text": self.save_dir, "imagej_entry_text": self.imagej_loc, "macro": self.macro_entry_text.get(), "arg": self.arg_entry_text.get()}
             with open(self.save_variables_file, "w+") as f:
                 json.dump(var_dict, f)
 
@@ -377,13 +395,14 @@ class OperaGUI:
                                 BFchannel=int(self.edfproj_BFch_var.get()),
                                 stitch_width=int(self.stitching_var_width.get()),
                                 stitch_height=int(self.stitching_var_height.get()),
+                                stitch_ref_ch=int(self.stitch_ref_var.get()),
                                 imagej_loc=self.imagej_entry_text.get(),
                                 imagej_proc_order=self.imagej_order_text.get())
 
 
 class OperaProcessing():
     """Performs the specified processing steps on the measurements selected from the GUI."""
-    def __init__(self, files, processes_to_run, save_dir, BFchannel=0, stitch_width=0, stitch_height=0, imagej_loc="", imagej_proc_order=""):
+    def __init__(self, files, processes_to_run, save_dir, BFchannel=0, stitch_width=0, stitch_height=0, stitch_ref_ch=0, imagej_loc="", imagej_proc_order=""):
 
         self.files = files
         self.save_dir = save_dir
@@ -404,6 +423,10 @@ class OperaProcessing():
         self.BFch = BFchannel
         self.stitch_width = stitch_width
         self.stitch_height = stitch_height
+        if stitch_ref_ch == 0:
+            self.stitch_ref_ch = BFchannel
+        else:
+            self.stitch_ref_ch = stitch_ref_ch
 
         if self.processes_to_run["stitching"] == 1:
             self.FOV_rename_order = self.get_stitching_order()
@@ -448,7 +471,7 @@ class OperaProcessing():
 
             if not self.is_data_timelapse:
                 for cur_FOV in range(1, self.FOVs+1):
-                    pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff"
+                    pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t\d+.tiff?"
                     cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
                     images = self.load_images(cur_image_name)
                 
@@ -476,7 +499,7 @@ class OperaProcessing():
                                          processor.get_image(), imagej=True, metadata={'axes': 'CYX'})
 
 
-                            if self.processes_to_run["stitching"] == 1:
+                            if self.processes_to_run["stitching"] == 1 or self.processes_to_run["separate_ch"] == 1:
                                 for ch in range(self.channels):
                                     ch_save_path = os.path.join(cur_save, "ch"+str(ch+1))
                                     if not os.path.exists(ch_save_path):
@@ -491,13 +514,34 @@ class OperaProcessing():
 
                 if self.processes_to_run["stitching"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == len(self.FOV_rename_order):
                     try:    
-                        StitchProcessing(cur_save, self.BFch, self.imagej_loc)
+                        StitchProcessing(cur_save, self.stitch_ref_ch, self.imagej_loc)
             
                     except ValueError as e:
                         print("Error stitching well " + cur_well + " with ValueError.")
                         continue
 
                 #TODO Add imagej processing after stitching!
+                if self.imagej_proc_order == "after stitching":
+                    
+                    try:
+                        stitch_loc = os.path.join(cur_save, "Stitched")
+                        stitch_pattern = fr".*_ch\d*.tiff?"
+                        image_files = self.files.get_name_from_regexstring(stitch_loc, stitch_pattern)
+                        post_stitched_image_name = [os.path.join(stitch_loc, image_files[i]) for i in range(len(image_files))]
+                        post_stitched_images = self.load_images(post_stitched_image_name)
+
+                        post_stitched_processor = ImageJProcessor(post_stitched_images)
+                        post_stitched_processor.process()
+                    except:
+                        print("Error processing well " + cur_well + " with ImageJ macro after stitching")
+                        continue
+
+                    try:
+                        tifffile.imwrite(stitch_loc + "/" + cur_well + "_imagejProcessed.tif",
+                                         post_stitched_processor.get_image(), imagej=True, metadata={'axes': 'CYX'})
+                    except Exception as e:
+                        print(f"An unexpected error {e} while saving data")
+                        continue
                     
             else:
                 for cur_FOV in range(1, self.FOVs+1):

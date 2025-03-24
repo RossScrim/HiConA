@@ -204,7 +204,7 @@ class ImageProcessor:
         self.macro = arg_text + """open(preImagePath);\n""" + self.macro + """\nsaveAs("Tiff", postImagePath);"""
 
 
-    def process(self, max_proj=False, min_proj=False, edf_proj=False, edf_BFch=-1, to_8bit=False, imagej_loc="", imagej_proc_order=""):
+    def process(self, max_proj=False, min_proj=False, edf_proj=False, edf_BFch=-1, to_8bit=False, imagej_loc="", imagej_proc_order="", imagej_after_stitching=False):
         """Processes the image based on flags for specific operations."""
         if imagej_proc_order == "to stack":
             self.imagej_run_macro(stack=True)
@@ -218,6 +218,8 @@ class ImageProcessor:
             self.imagej_run_macro(stack=False)
         if to_8bit:
             self.convert_to_8bit()
+        if imagej_after_stitching:
+            self.imagej_run_macro(stack=False)
         return self  # Return self to allow method chaining
     
     def get_image(self):
