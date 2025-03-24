@@ -215,6 +215,9 @@ class OperaGUI:
         self.imagej_combobox = ttk.Combobox(self.macro_selection_frame, textvariable=self.imagej_order_text, state='readonly', values=["to stack", "after MIP/EDF", "after stitching"])
         self.imagej_combobox.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
 
+        imagej_information_button = ttk.Button(self.macro_selection_frame, text="Get macro/args files guidelines", command=self.display_imagej_info)
+        imagej_information_button.grid(row=4, column=1, padx=5, sticky=tk.W)
+
         #Add 3D options here
         """
         # Display 3D processing options
@@ -236,6 +239,12 @@ class OperaGUI:
         self.confirm_button.grid(row=0, column=0, padx=0, pady=10, sticky=tk.W)
 
         self.root.mainloop()
+
+    def display_imagej_info(self):
+        messagebox.showinfo(title="Guidelines for ImageJ macro and arguments files", message="The macro should be an .ijm and the arguments a .json file.\n\n"
+        "The image gets opened by the Opera data handler so start the macro from the first image operation.\n\n"
+        "The arguments for the macro should be in a dictionary within the .json file.\n\n"
+        "The arguments will be put at the beginning of the macro by the Opera data handler, so there is no need to add the arguments specifics at the top of the macro.\n\n")
 
     def show_imagej_frame(self):
             edf = self.edfproj_state.get()

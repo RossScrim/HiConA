@@ -125,8 +125,6 @@ class ImageProcessor:
     def imagej_run_macro(self, stack=False):
         self.init_imagej()
 
-        print(stack)
-
         if stack:
             processed_image = np.empty((self.num_planes, self.num_channels, self.image_x_dim, self.image_y_dim))
         else:
@@ -189,22 +187,21 @@ class ImageProcessor:
         with open(args_file, "r") as f:
             self.arg = json.load(f)
 
-        #TODO macro starts from the image already being open, check what happens if arguments is not at the top of macro txt-file.
-        self.macro = """
-                    @ String preImagePath 
-                    @ String postImagePath
-                        
-                    open(preImagePath);\n""" + self.macro + """
-                    saveAs("Tiff", postImagePath);
-                    """
-
         self.arg["preImagePath"] = self.pre_macro_temp
         self.arg["postImagePath"] = self.post_macro_temp
 
-        print(self.macro, self.arg)
-  
+        arg_text = ""
+        for key in self.arg.keys():
+            arg_type = type(self.arg[key])
 
+            if arg_type == str:
+                arg_text += "#@ String " + str(key) +"\n" 
+            elif arg_type == int:
+                arg_text += "#@ int " + str(key) +"\n"
+            elif arg_type == float:
+                arg_text += "#@ float " + str(key) +"\n"
         
+        self.macro = arg_text + """open(preImagePath);\n""" + self.macro + """\nsaveAs("Tiff", postImagePath);"""
 
 
     def process(self, max_proj=False, min_proj=False, edf_proj=False, edf_BFch=-1, to_8bit=False, imagej_loc="", imagej_proc_order=""):
