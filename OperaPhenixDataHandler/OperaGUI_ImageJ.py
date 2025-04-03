@@ -297,7 +297,6 @@ class OperaGUI:
                 self.imagej_frame.grid_forget()
                 self.macro_selection_frame.grid_forget()
 
-
     def configurefunction(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"), width=350, height=720)
     
@@ -366,10 +365,9 @@ class OperaGUI:
     
     def proc_confirm(self):
         imagej_loc = self.imagej_entry_text.get()
+        interactive_mode = self.interactive_state.get()
         imagej_macro = self.macro_entry_text.get()
         imagej_args = self.arg_entry_text.get()
-        interactive_mode = self.interactive_state.get()
-        imagej_proc_order = self.imagej_order_text.get()
         
         stitch_ref_ch = int(self.stitch_ref_var.get())
         BFchannel = int(self.edfproj_BFch_var.get())
@@ -401,6 +399,9 @@ class OperaGUI:
                 self.imagej_config_file = os.path.join(self.cur_py_dir, "imagej_config.json")
                 with open(self.imagej_config_file, "w+") as f:
                     json.dump(imagej_dict, f)
+                imagej_proc_order = self.imagej_order_text.get()
+            else:
+                imagej_proc_order = None
 
             # Save used variables using json for next run
             var_dict = {"src_entry_text": self.src_dir, 
@@ -495,13 +496,15 @@ class OperaProcessing():
 
     def get_stitching_order(self): #Need to figure out a smart way to do this
         if self.stitch_height == 2 and self.stitch_width == 2:
-            return ["01", "03", "04", "02"]
+            return ["0"+str(x) for x in range(1, 5)]
         elif self.stitch_height == 3 and self.stitch_width == 3:
-            return ["05", "01", "04", "07", "08", "02", "03", "06", "09"]
+            return ["05"] + ["0"+str(x) for x in range(1, 10) if x!=5]
         elif self.stitch_height == 4 and self.stitch_width == 4:
-            return ["10", "01", "05", "09", "13", "14", "06", "02", "03", "07", "11", "15", "16", "12", "08", "04"]
+            return ["10"] + ["0"+str(x) for x in range(1, 10)] + [str(x) for x in range(11, 17)]
         elif self.stitch_height == 5 and self.stitch_width == 5:
-            return ["13", "01", "06", "11", "16", "21", "22", "17", "12", "07", "02", "03", "08", "18", "23", "24", "19", "14", "09", "04", "05", "10", "15", "20", "25"]
+            return ["13"] + ["0"+str(x) for x in range(1, 10)] + [str(x) for x in range(11, 26) if x!=13]
+        elif self.stitch_height == 11 and self.stitch_width == 9:
+            return ["50"] + ["0"+str(x) for x in range(1, 10)] + [str(x) for x in range(10,100) if x!=50]
         else:
             print("WARNING: Stitching will not be performed correctly!")
         
@@ -563,7 +566,7 @@ class OperaProcessing():
 
                 if self.processes_to_run["stitching"] == 1 and len([f for f in os.listdir(cur_save) if f.endswith(".tif")]) == len(self.FOV_rename_order):
                     try:    
-                        StitchProcessing(cur_save, self.stitch_ref_ch, self.imagej_loc)
+                        StitchProcessing(cur_save, self.stitch_ref_ch, self.imagej_loc, self.stitch_height, self.stitch_width)
             
                     except ValueError as e:
                         print("Error stitching well " + cur_well + " with ValueError.")

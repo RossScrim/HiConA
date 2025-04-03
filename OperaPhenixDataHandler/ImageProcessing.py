@@ -61,11 +61,11 @@ class ImageProcessor:
         @ String procImagePath
 
         open(BFImagePath); 
-        print("image opened");
+        //print("image opened");
         run("EDF Easy mode", "quality='2' topology='0' show-topology='off' show-view='off'");
-        print("EDF run");
+        //print("EDF run");
         while(!isOpen("Output")){
-        print("in while-loop");
+        //print("in while-loop");
 		wait(5000);}
 		selectImage("Output");
         //run("Duplicate...", "Output-1");

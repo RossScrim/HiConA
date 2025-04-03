@@ -19,18 +19,20 @@ def rename_FOV(path):
 
         os.rename(os.path.join(path, cur_name), os.path.join(path, new_name))
 
-def stitch_first_imageJ(orgDir, saveDir, wellName, chName, ij):
+def stitch_first_imageJ(orgDir, saveDir, wellName, chName, ij, height, width):
     #In the macro, change where the bf.tiff is stored and where the processed_bf should be saved.
     macro = """
     //@ String orgDir
     //@ String saveDir
     //@ String wellName
     //@ String chName
+    //@ String height
+    //@ String width
 
     //path = replace(orgDir, "/", File.separator);
     //print(path);
 
-    run("Grid/Collection stitching", "type=[Grid: column-by-column] order=[Down & Right                ] grid_size_x=3 grid_size_y=3 tile_overlap=5 first_file_index_i=1 directory=["+orgDir+"] file_names="+wellName+"f{ii}.tif output_textfile_name=TileConfiguration.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
+    run("Grid/Collection stitching", "type=[Grid: snake by rows] order=[Right & Down                ] grid_size_x="+width+" grid_size_y="+height+" tile_overlap=5 first_file_index_i=1 directory=["+orgDir+"] file_names="+wellName+"f{ii}.tif output_textfile_name=TileConfiguration.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
     saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tif");
     close("*");
     """
@@ -39,7 +41,9 @@ def stitch_first_imageJ(orgDir, saveDir, wellName, chName, ij):
         'orgDir': orgDir,
         'saveDir': saveDir,
         'wellName': wellName,
-        'chName': chName
+        'chName': chName,
+        'height': str(height),
+        'width': str(width)
     }
 
     ij.py.run_macro(macro, args)
@@ -97,7 +101,7 @@ def mergeImages(orgDir, wellName, ij):
 
     ij.py.run_macro(macro, args)
 
-def StitchProcessing(well_path, BFch, imagej_loc):
+def StitchProcessing(well_path, BFch, imagej_loc, height, width):
     plugins_dir = os.path.join(imagej_loc, "plugins") # "C:/Users/ewestlund/Fiji.app/plugins" #Add path to Fiji Plugins
     scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
     ij = imagej.init(imagej_loc) # "C:/Users/ewestlund/Fiji.app")#, mode="interactive") #Add path to Fiji.app folder
@@ -115,7 +119,7 @@ def StitchProcessing(well_path, BFch, imagej_loc):
     ch_directories = [d for d in os.listdir(well_path) if os.path.isdir(os.path.join(well_path, d)) and d.startswith("ch") and d != BF_dir]
 
 
-    stitch_first_imageJ(BF_path, stitched_path, wellName, BF_dir, ij)
+    stitch_first_imageJ(BF_path, stitched_path, wellName, BF_dir, ij, height, width)
 
     stitch_configuration_files = [f for f in os.listdir(BF_path) if f.endswith(".txt")]
 
@@ -223,7 +227,7 @@ if __name__ == "__main__":
 
     for well_path in well_paths:
         try:
-            StitchProcessing(well_path, stitch_ch, imagej_loc)
+            StitchProcessing(well_path, stitch_ch, imagej_loc, height=3, width=3)
         except ValueError as e:
             print(f"Error stitching well {well_path} with ValueError.")
             continue
