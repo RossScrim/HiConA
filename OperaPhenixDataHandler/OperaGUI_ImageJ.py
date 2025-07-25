@@ -9,12 +9,12 @@ import os
 import pickle
 import json
 
-from ConfigReader import OperaExperimentConfigReader
-from FileManagement import FilePathHandler
-from ImageProcessing import ImageProcessor
-from StitchingImageJ import StitchProcessing
-from CellposeSegmentation import cellpose_organiser
-from ImageJAfterStitching import ImageJProcessor
+from .ConfigReader import OperaExperimentConfigReader
+from .FileManagement import FilePathHandler
+from .ImageProcessing import ImageProcessor
+from .StitchingImageJ import StitchProcessing
+from .CellposeSegmentation import cellpose_organiser
+from .ImageJAfterStitching import ImageJProcessor
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
