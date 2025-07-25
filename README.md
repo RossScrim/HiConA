@@ -28,6 +28,13 @@ Opera_Phenix_Data_Handler/
 
 > 🔸 Each folder containing `.py` files should include an `__init__.py` to be recognized as a package.
 
+
+---
+## 🚀 Prerequisites
+
+**Python 3.9 is required** - please ensure you have installed python 3.9 before installation our packages. 
+you can follow the instrustions below on how to clone the repository and setup the package or download lastest release v1.1.0 and follow the instructions below under **Source Code Installation**
+
 ---
 
 ## 🛠️ Environment Setup
