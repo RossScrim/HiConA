@@ -86,19 +86,6 @@ OperaPhenixDataHandler/main.py
 
 ---
 
-## 🧾 JSON Configuration Files
-
-Store your `.json` files in the `data/` folder. Access them in code like this:
-
-```python
-import json
-from pathlib import Path
-
-config_path = Path(__file__).resolve().parent.parent / "data" / "example_config.json"
-with open(config_path, "r") as f:
-    config = json.load(f)
-```
-
 ✅ This ensures relative imports work properly.
 
 > ❌ Do **not** run it like `python main.py` — this may break imports.
