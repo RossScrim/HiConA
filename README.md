@@ -23,7 +23,22 @@ Opera_Phenix_Data_Handler/
 └── OperaPhenixDataHandler/   # Main package
     ├── __init__.py
     ├── main.py               # Entry point for CLI
+    ├── CellProfiler.py
+    ├── CellposeSegmentation.py
+    ├── ConfigReader.py
+    ├── FileManagement.py
+    ├── ImageJAfterStitching.py
+    ├── ImageProcessing.py
+    ├── StitchingImageJ.py
+    ├── arg.json
+    ├── imagej_config.json
+    ├── macro.ijm
+    ├── saved_variables.json
     └── OperaGUI_ImageJ.py    # GUI interaction module
+	
+
+
+
 ```
 
 > 🔸 Each folder containing `.py` files should include an `__init__.py` to be recognized as a package.
