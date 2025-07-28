@@ -1,6 +1,6 @@
-# Opera Data Processor
+# HiConA
 
-A command-line tool for processing high-content imaging data from Opera Phenix systems.
+A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**nalysis (HiConA) of imaging data from the Opera Phenix with open-source image analysis packages in a GUi workflow. 
 
 ---
 
