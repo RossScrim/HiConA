@@ -217,8 +217,7 @@ class StitchingGUI:
     def get_parameters(self):
         return self.src_dir, self.stitch_ch, self.imagej_loc        
 
-
-if __name__ == "__main__":
+def main():
     """Run main to stitch all wells for one measurement. The measurement should already have been preprocessed with max/min/EDF projection."""
     stitcher = StitchingGUI()
     measurement_dir, stitch_ch, imagej_loc = stitcher.get_parameters()
@@ -231,3 +230,6 @@ if __name__ == "__main__":
         except ValueError as e:
             print(f"Error stitching well {well_path} with ValueError.")
             continue
+
+if __name__ == "__main__":
+   main()
