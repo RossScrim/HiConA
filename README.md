@@ -1,6 +1,6 @@
 # HiConA
 
-A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**nalysis (HiConA) of imaging data from the Opera Phenix with open-source image analysis packages in a GUi workflow. 
+A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**nalysis (HiConA) of imaging data from the Opera Phenix with open-source image analysis packages in a GUI workflow. 
 
 ---
 
@@ -57,8 +57,8 @@ you can follow the instrustions below on how to clone the repository and setup t
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/RossScrim/Opera_Phenix_Data_Handler.git
-cd Opera_Phenix_Data_Handler
+git clone https://github.com/RossScrim/HiConA.git
+cd HiConA
 ```
 
 ### 2. Create and activate a virtual environment (recommended)
@@ -90,13 +90,13 @@ This installs dependencies from `requirements.txt` and registers the CLI command
 Once installed, simply run:
 
 ```bash
-Opera_Processor
+HiConA.run
 ```
 
 This executes the `main()` function from:
 
 ```
-OperaPhenixDataHandler/main.py
+HiConA/main.py
 ```
 
 ---
