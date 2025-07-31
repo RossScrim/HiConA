@@ -202,8 +202,7 @@ class CellposeGUI:
     def get_parameters(self):
         return self.src_dir, self.seg_ch        
 
-
-if __name__ == "__main__":
+def main():
     """Run main to stitch all wells for one measurement. The measurement should already have been preprocessed with max/min/EDF projection."""
     segmenter = CellposeGUI()
     measurement_dir, seg_ch = segmenter.get_parameters()
@@ -212,3 +211,6 @@ if __name__ == "__main__":
         cellpose_organiser(measurement_dir, seg_ch)
     except ValueError as e:
         print(f"Error segmenting {measurement_dir} with ValueError.")
+
+if __name__ == "__main__":
+    main()

@@ -20,6 +20,8 @@ setup(
     entry_points={
         'console_scripts': [
             'HiConA.run = HiConA.main:main',
+            'HiConA.Stitch = HiConA.StitchingImageJ:main',
+            'HiConA.Cellpose = HiConA.CellposeSegmentation:main'
         ],
     },
     classifiers=[
