@@ -6,7 +6,7 @@ A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**na
 
 ## 📦 Features
 
-- Launchable from the command line via `Opera_Data_Processor`
+- Launchable from the command line via `HiConA`
 - Detects all archived measurements from Opera Phenix "hs" directories
 - GUI which allows the user to select batch and pre-process steps to apply to Opera Phenix data
 - Integrates with `ImageJ` via the `OperaGUI_ImageJ` class
@@ -16,11 +16,11 @@ A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**na
 ## 🧩 Project Structure
 
 ```
-Opera_Phenix_Data_Handler/
+HiConA/
 ├── setup.py                  # Installation script
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # Documentation (this file)
-└── OperaPhenixDataHandler/   # Main package
+└── HiConA/   # Main package
     ├── __init__.py
     ├── main.py               # Entry point for CLI
     ├── CellProfiler.py
