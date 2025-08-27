@@ -25,6 +25,9 @@ class FilePathHandler:
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
+    def get_file_path(self, well_name):
+        return os.path.join(self.archived_image_path, well_name)
+
 
 if __name__ == "__main__":
     archived_data_path = r"X:\DSR\CONFOFAC\GLIOTEAM-OPERA\vmolinari\hs\d3d31154-c106-4002-a94c-82d30ba740e3"
