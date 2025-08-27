@@ -1,4 +1,4 @@
-from .OperaGUI_ImageJ import OperaGUI
+from OperaGUI_ImageJ import OperaGUI
 
 def main():
     OperaGUI()

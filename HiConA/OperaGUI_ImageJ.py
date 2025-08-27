@@ -9,12 +9,12 @@ import os
 import pickle
 import json
 
-from .ConfigReader import OperaExperimentConfigReader
-from .FileManagement import FilePathHandler
-from .ImageProcessing import ImageProcessor
-from .StitchingImageJ import StitchProcessing
-from .CellposeSegmentation import cellpose_organiser
-from .ImageJAfterStitching import ImageJProcessor
+from ConfigReader import OperaExperimentConfigReader
+from FileManagement import FilePathHandler
+from ImageProcessing import ImageProcessor
+from StitchingImageJ import StitchProcessing
+from CellposeSegmentation import cellpose_organiser
+from ImageJAfterStitching import ImageJProcessor
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
@@ -461,6 +461,7 @@ class OperaProcessing():
             self.channels = 1
         self.planes = self.config_file["PLANES"]
         self.timepoints = self.config_file["TIMEPOINTS"]
+        self.measurement = self.config_file["MEASUREMENT"].split(" ")[-1]
 
         self.BFch = BFchannel
         self.stitch_width = stitch_width
@@ -476,6 +477,7 @@ class OperaProcessing():
             self.FOV_rename_order = ["0"+str(num) for num in range(1, self.FOVs+1)]
 
         self.is_data_timelapse = self.check_is_data_timelapse()
+
         self.run()
         
     def check_is_data_timelapse(self):
@@ -507,11 +509,21 @@ class OperaProcessing():
             return ["50"] + ["0"+str(x) for x in range(1, 10)] + [str(x) for x in range(10,100) if x!=50]
         else:
             print("WARNING: Stitching will not be performed correctly!")
-        
+
+    def get_num_FOV(self, well_name):
+        well_path = self.files.get_file_path(well_name)
+        image_names = os.listdir(well_path)
+        field_nums = [int(f[f.index("f")+1:f.index("p")]) for f in image_names]
+        return max(field_nums)
+
     def run(self):
         for cur_well in self.files.well_names:
             cur_save = os.path.join(self.save_dir, cur_well)
             self.files.create_dir(cur_save)
+
+            if self.measurement.endswith("b"):
+                self.FOVs = self.get_num_FOV(cur_well)
+                self.FOV_rename_order = ["0"+str(num) for num in range(1, self.FOVs+1)]
 
             if not self.is_data_timelapse:
                 for cur_FOV in range(1, self.FOVs+1):
@@ -601,12 +613,12 @@ class OperaProcessing():
                     processed_image = []
                     for timepoint in range(1, self.timepoints):
                         print("Timepoint call")
-                        pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t0?{timepoint}.tiff"
+                        pattern = fr"r\d+c\d+f0?{cur_FOV}p\d+-ch\d+t0?{timepoint}.tiff?"
                         cur_image_name = self.files.get_opera_phenix_images_from_FOV(cur_well, pattern)
                         images = self.load_images(cur_image_name)
 
                         try:
-                            images = np.reshape(images, [self.planes, self.channels, self.xy, self.xy])
+                            images = np.reshape(images, [self.planes, self.channels, self.xdim, self.ydim])
                             processor = ImageProcessor(images, self.config_file)
                             processor.process(max_proj=self.processes_to_run["max_projection"], 
                                               to_8bit=self.processes_to_run["convert_to_8bit"], 
