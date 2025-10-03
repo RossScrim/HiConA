@@ -138,4 +138,4 @@ Stirling DR, Swain-Bowden MJ, Lucas AM, Carpenter AE, Cimini BA, Goodman A (2021
 
 ## 📄 License
 
-This project is licensed under the  License. See the `LICENSE` file for details.
+This project is licensed under the CC-BY-SA 4.0 License. See the `LICENSE` file for details.
