@@ -8,7 +8,7 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
-from .ConfigReader import OperaExperimentConfigReader
+from ConfigReader import OperaExperimentConfigReader
 
 
 # TODO Add this class if needed?
