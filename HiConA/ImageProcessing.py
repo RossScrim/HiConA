@@ -8,6 +8,15 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
+from ConfigReader import OperaExperimentConfigReader
+
+
+# TODO Add this class if needed?
+class ImageFOVHandler:
+    def __init__(self):
+        pass
+    def recombine_FOV():
+        pass
 
 class ImageProcessor:
     def __init__(self, images, config):

@@ -6,7 +6,6 @@ from tkinter import messagebox, Scrollbar, Canvas
 from tkinter.filedialog import askdirectory, askopenfilename
 import re
 import os
-import pickle
 import json
 
 from setuptools.command.setopt import config_file
@@ -18,6 +17,16 @@ from StitchingImageJ import StitchProcessing
 from CellposeSegmentation import cellpose_organiser
 from ImageJAfterStitching import ImageJProcessor
 
+class HiConA_GUI:
+    def __init__(self):
+
+        self.saved_var = self._load_variables()
+
+    def _load_variables(self):
+        saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
+        if os.path.isfile(saved_variables_f):
+            with open(saved_variables_f, "r+") as f:
+                return json.load(f)
 
 class OperaGUI:
     """GUI, getting input from user to run Opera processing."""
