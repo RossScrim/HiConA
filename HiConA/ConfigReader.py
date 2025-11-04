@@ -36,8 +36,6 @@ class ConfigReader:
         json_text = "\n".join(lines)
         return json.loads(json_text)
 
-    def get_config(self):
-        return self.config
 
 if __name__ == "__main__":
     # Opera .txt JSON with header/footer
