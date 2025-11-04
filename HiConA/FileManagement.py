@@ -6,24 +6,27 @@ class FilePathHandler:
     def __init__(self, archived_data_path: str):
         self.archived_data_path = archived_data_path + "\\"
         self.archived_data_config = os.path.join(self.archived_data_path,
-                                                 self.get_name_from_regexstring(self.archived_data_path, r'.*\.kw\.txt')[0])
+                                                 self._get_name_from_regexstring(
+                                                     self.archived_data_path, r'.*\.kw\.txt')[0])
         self.archived_image_path = self.archived_data_path + "images"
-        self.well_names = self.get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
+        self.well_names = self._get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
 
-    def get_name_from_regexstring(self, dir_path: str, str_pattern: str):
-        matched_string = [match.group() for file_name in sorted(os.listdir(dir_path)) if
-                                 (match := re.search(str_pattern, file_name))]
-        return matched_string
+    def _get_name_from_regexstring(self, dir_path: str, str_pattern: str):
+        matched_strings = []
+        for file_name in sorted(os.listdir(dir_path)):
+            match = re.search(str_pattern, file_name)
+            if match:
+                matched_strings.append(match.group())
+        return matched_strings
 
     # DO we need the below function in class or should we grab the images to process when needed
     def get_opera_phenix_images_from_FOV(self, well_name: str, pattern):
         well_path = os.path.join(self.archived_image_path, well_name)
-        image_files = self.get_name_from_regexstring(well_path, pattern)
-        return [os.path.join(well_path, image_files[i]) for i in range(len(image_files))]
+        image_files = self._get_name_from_regexstring(well_path, pattern)
+        return [os.path.join(well_path, file) for file in image_files]
 
     def create_dir(self, save_path):
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
+        return os.makedirs(save_path, exist_ok=True)
 
     def get_file_path(self, well_name):
         return os.path.join(self.archived_image_path, well_name)

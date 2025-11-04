@@ -1,56 +1,43 @@
 import json
-import csv
+from pathlib import Path
 
+class ConfigReader:
+    def __init__(self, file_path):
+        self.file_path = Path(file_path)
+        self.config = None
 
-class JSONReader:
-    def __init__(self, config_file):
-        with open(config_file, 'r') as file:
-            self.config = json.load(file)
+    def load(self, remove_first_lines=0, remove_last_lines=0):
+        suffix = self.file_path.suffix.lower()
 
-    def get_config(self):
+        if suffix == ".json":
+            self.config = self._load_json()
+
+        elif suffix == ".txt":
+            self.config = self._load_json_from_txt(remove_first_lines, remove_last_lines)
+
+        else:
+            raise ValueError(f"Unsupported file type: {suffix}")
+
         return self.config
 
-class OperaExperimentConfigReader:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.json_data = None
+    def _load_json(self):
+        with open(self.file_path, "r") as f:
+            return json.load(f)
 
-    def load_json_from_txt(self, remove_first_lines=0, remove_last_lines=0):
-        """
-        Loads a .txt file as JSON, optionally removing the specified number of lines from the beginning and end.
+    def _load_json_from_txt(self, remove_first_lines, remove_last_lines):
+        with open(self.file_path, "r") as f:
+            lines = f.read().splitlines()
 
-        Args:
-            remove_first_lines (int): The number of lines to remove from the beginning.
-            remove_last_lines (int): The number of lines to remove from the end.
-
-        Returns:
-            dict: The parsed JSON data as a dictionary, or None if an error occurs.
-        """
-
-        try:
-            with open(self.file_path, 'r') as f:
-                text = f.read()
-
-            lines = text.splitlines()
+        if remove_last_lines > 0:
             lines = lines[remove_first_lines:-remove_last_lines]
-            json_text = '\n'.join(lines)
+        else:
+            lines = lines[remove_first_lines:]
 
-            self.json_data = json.loads(json_text)
-            return self.json_data
-
-        except FileNotFoundError:
-            print(f"File '{self.file_path}' not found.")
-            return None
-
-        except json.JSONDecodeError as e:
-            print(f"Error parsing JSON: {e}")
-            return None
-
-    def get_config(self):
-        return self.json_data
+        json_text = "\n".join(lines)
+        return json.loads(json_text)
 
 
 if __name__ == "__main__":
-    opera_config = OperaExperimentConfigReader("X:/DSR/CONFOFAC/SHARED/OPERA/ewestlund/hs/b02fd523-9bf7-4462-8f31-686d22ffefb8/b02fd523-9bf7-4462-8f31.kw.txt")
-    opera_config_file = opera_config.load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
-    print(opera_config_file)
+    # Opera .txt JSON with header/footer
+    opera_config = ConfigReader("C:\\Users\\rscrimgeour\\PycharmProjects\\HiConA\\88651da0-9ab0-4728-816f.kw.txt").load(remove_first_lines=1, remove_last_lines=2)
+    print(opera_config)
