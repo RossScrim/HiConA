@@ -5,7 +5,6 @@ from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import os
 import json
-import threading #threading.Thread(target=target_function).start() https://www.youtube.com/watch?v=jnrCpA1xJPQ&list=PLCC34OHNcOtoC6GglhF3ncJ5rLwQrLGnV&index=97
 
 class SourceGUI:
     def __init__(self):
@@ -62,7 +61,7 @@ class SourceGUI:
 
             self._save_variables()
             
-            self.root.destroy()
+            self.root.quit()
 
     def _save_variables(self):
         # Save used variables using json for next run

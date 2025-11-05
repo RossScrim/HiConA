@@ -36,7 +36,6 @@ if __name__ == "__main__":
     archived_data_path = r"X:\DSR\CONFOFAC\GLIOTEAM-OPERA\vmolinari\hs\d3d31154-c106-4002-a94c-82d30ba740e3"
     files = FilePathHandler(archived_data_path)
 
-
     field_of_view = 2
     for field in range(0, field_of_view):
         pattern = fr"r\d+c\d+f0{field}p\d+-ch\d+t\d+.tiff"

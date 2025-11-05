@@ -1,6 +1,5 @@
-from HiConA_processor import HiConAProcessor
-from GUI_source_window import SourceGUI
-from GUI_selection_window import SelectionGUI
+from HiConA.GUI.GUI_source_window import SourceGUI
+from HiConA.GUI.GUI_selection_window import SelectionGUI
 
 def main():
     source_window = SourceGUI()
@@ -12,8 +11,6 @@ def main():
 
     print(measurements)
     print(processes)
-
-    HiConAProcessor(measurements, processes)
 
 if __name__ == '__main__':
     main()

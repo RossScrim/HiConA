@@ -8,7 +8,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name='HiConA',
-    version='1.1.0',
+    version='1.3.0',
     author=['Ross Scrimgeour', 'Emma Westlund'],
     author_email=['rcscrimgeour@gmail.com', 'ross.scrimgeour@icr.ac.uk', 'emma.westlund@icr.ac.uk'],
     description='Short description of your package',
@@ -25,7 +25,7 @@ setup(
         ],
     },
     classifiers=[
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.13',
         'Operating System :: OS Independent',
     ],
 )

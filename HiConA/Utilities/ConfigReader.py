@@ -39,5 +39,5 @@ class ConfigReader:
 
 if __name__ == "__main__":
     # Opera .txt JSON with header/footer
-    opera_config = ConfigReader("C:\\Users\\rscrimgeour\\PycharmProjects\\HiConA\\88651da0-9ab0-4728-816f.kw.txt").load(remove_first_lines=1, remove_last_lines=2)
+    opera_config = ConfigReader("/88651da0-9ab0-4728-816f.kw.txt").load(remove_first_lines=1, remove_last_lines=2)
     print(opera_config)
