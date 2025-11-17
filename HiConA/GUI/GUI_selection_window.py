@@ -7,8 +7,8 @@ from tkinter.filedialog import askdirectory, askopenfilename
 import os
 import json
 
-from ConfigReader import OperaExperimentConfigReader
-from FileManagement import FilePathHandler
+from HiConA.Utilities.ConfigReader import ConfigReader
+from HiConA.Utilities.FileManagement import FilePathHandler
 
 class SelectionGUI:
     def __init__(self, source_input):
@@ -34,7 +34,7 @@ class SelectionGUI:
             measurement_path = os.path.join(self.src_dir, measurement)
 
             files = FilePathHandler(measurement_path)
-            opera_config_file = OperaExperimentConfigReader(files.archived_data_config).load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
+            opera_config_file = ConfigReader(files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
 
             plate_name = opera_config_file["PLATENAME"]
             measure_num = opera_config_file["MEASUREMENT"].split(" ")
@@ -283,7 +283,7 @@ class SelectionGUI:
 
 
 if __name__ == "__main__":
-    input = {"src_dir": r"C:\Users\ewestlund\Documents\Python Projects\HiConA\Opera Phenix Test Data\hs", "save_dir": r"C:\Users\ewestlund\Documents\Python Projects\HiConA\Saving Dir Test"}
+    input = {"src_dir": "W:/Ross/Harmony TimeLapse Example/Harmony TimeLapse Example/hs", "save_dir": "W:/Ross/Harmony TimeLapse Example"}
     w = SelectionGUI(input)
     measurements, processes = w.get_input()
     print("Will process measurements:")

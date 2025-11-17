@@ -1,6 +1,6 @@
 import numpy as np
 import tifffile
-import imagej
+
 import scyjava
 import tempfile
 import re
@@ -8,17 +8,10 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
-from ConfigReader import OperaExperimentConfigReader
+from HiConA.Utilities.ConfigReader import ConfigReader
 
 
-# TODO Add this class if needed?
-class ImageFOVHandler:
-    def __init__(self):
-        pass
-    def recombine_FOV():
-        pass
-
-class ImageProcessor:
+class PreProcessor:
     def __init__(self, images, config):
         self.image_array = np.array(images)
         dimensions = np.shape(self.image_array)
@@ -233,8 +226,8 @@ if __name__ == "__main__":
     in_measurement_path = [f for f in os.listdir(measurement_path) if not os.path.isdir(f)]
     kw_file = next(x for x in in_measurement_path if x.endswith(".kw.txt"))
 
-    opera_config = OperaExperimentConfigReader(os.path.join(measurement_path, kw_file))
-    opera_config_file = opera_config.load_json_from_txt(remove_first_lines=1, remove_last_lines=2)
+    opera_config = ConfigReader(os.path.join(measurement_path, kw_file))
+    opera_config_file = opera_config.load(remove_first_lines=1, remove_last_lines=2)
 
     planes = opera_config_file["PLANES"]
     channels = len(opera_config_file["CHANNEL"])
@@ -266,7 +259,7 @@ if __name__ == "__main__":
 
         images = np.reshape(im_arr, [planes, channels, xdim, ydim])
         
-        processor = ImageProcessor(images, opera_config_file)
+        processor = PreProcessor(images, opera_config_file)
 
         processor.process(edf_proj=1, edf_BFch=2)
         images = processor.get_image()
