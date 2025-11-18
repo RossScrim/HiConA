@@ -15,7 +15,9 @@ class HiConAGUI:
         print("Running")
         self.master = window
         self._load_variables()
+
         self._initiate_window()
+
 
     def _initiate_window(self):
         # Configure master
@@ -175,6 +177,7 @@ class HiConAGUI:
         self.cellpose_check = tb.Checkbutton(analysis_frame, text = "Cellpose",
                                          variable=self.imagej_state)
         self.cellpose_check.grid(row=2, column=0, pady=5, sticky=tk.W)
+
 
 
     def _load_variables(self):
