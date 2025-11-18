@@ -260,28 +260,30 @@ class HiConAGUI:
 
     def _update_selection(self):
         self.src_dir = self.src_entry_text.get()
-        self.save_dir = self.save_entry_text.get()
+        if self.src_dir == "" or not self.src_dir.endswith("hs"):
+            Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
+        else:
 
-        self.measurement_dict, self.config_files = self._get_measurement_from_src()
+            self.measurement_dict, self.config_files = self._get_measurement_from_src()
 
-        # Clear existing widgets
-        for widget in self.int_measurement_frame.winfo_children():
-            widget.destroy()
+            # Clear existing widgets
+            for widget in self.int_measurement_frame.winfo_children():
+                widget.destroy()
 
-        for index, measurement in enumerate(self.measurement_dict.keys()):
-             self.measure_var_list.append(tk.IntVar(value=0))
+            for index, measurement in enumerate(self.measurement_dict.keys()):
+                self.measure_var_list.append(tk.IntVar(value=0))
 
-             cb_frame = tb.Frame(self.int_measurement_frame)
-             cb_frame.pack(fill='x', pady=2)
+                cb_frame = tb.Frame(self.int_measurement_frame)
+                cb_frame.pack(fill='x', pady=2)
 
-             cb = tb.Checkbutton(cb_frame, variable=self.measure_var_list[index])
-             cb.pack(side='left', padx=(0,5))
+                cb = tb.Checkbutton(cb_frame, variable=self.measure_var_list[index])
+                cb.pack(side='left', padx=(0,5))
 
-             label = tb.Label(cb_frame, text=measurement, wraplength=400, justify='left', anchor='w')
-             label.pack(side='left', fill='x', expand=True)
+                label = tb.Label(cb_frame, text=measurement, wraplength=400, justify='left', anchor='w')
+                label.pack(side='left', fill='x', expand=True)
              
-             # Make label clickable to toggle checkbutton
-             label.bind("<Button-1>", lambda e, var=self.measure_var_list[index]: var.set(1 - var.get()))
+                # Make label clickable to toggle checkbutton
+                label.bind("<Button-1>", lambda e, var=self.measure_var_list[index]: var.set(1 - var.get()))
 
     def _get_measurement_from_src(self):
         measurement_dict = {}
