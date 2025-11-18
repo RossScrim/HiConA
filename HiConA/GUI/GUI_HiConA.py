@@ -108,8 +108,10 @@ class HiConAGUI:
         self.sep_ch_state = tk.IntVar()
         self.edfproj_text = tk.StringVar()
         self.edf_ch_int = tk.IntVar()
+        self.edf_ch_int.set(self._set_variable("EDF_channel_int"))
         self.stitching_state = tk.IntVar()
         self.stitching_ch_int = tk.IntVar()
+        self.stitching_ch_int.set(self._set_variable("stitch_ref_ch_int"))
 
         self.processing_options = {"8bit": self.bit8_state,
                                    "sep_ch": self.sep_ch_state,
@@ -150,7 +152,7 @@ class HiConAGUI:
         self.imagej_frame = tb.Frame(processing_frame)
         tb.Label(self.imagej_frame, text="ImageJ.app Location").grid(row=0, column=0, pady=5, sticky=tk.W)
         self.imagej_entry_text = tk.StringVar()
-        self.imagej_entry_text.set(self._set_variable("imagej_loc"))
+        self.imagej_entry_text.set(self._set_variable("imagej_loc_entry"))
 
         self.imagej_entry = tb.Entry(self.imagej_frame, text=self.imagej_entry_text, width=13, state='readonly')
         self.imagej_entry.grid(row=0, column=1, padx=20, pady=30, sticky=tk.W)
@@ -217,13 +219,14 @@ class HiConAGUI:
         else:
             self._save_variables()
 
-            self.measurement_config_matched, self.measurement_files_matched = self._get_measurement_to_process()
+            self.measurement_files_matched = self._get_measurement_to_process()
             self.processing_selection = self._define_processing()
 
             self.master.destroy()
 
     def _load_variables(self):
         self.saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
+        print(self.saved_variables_f)
         if os.path.isfile(self.saved_variables_f):
             with open(self.saved_variables_f, "r+") as f:
                 self.saved_var = json.load(f)
@@ -236,8 +239,8 @@ class HiConAGUI:
         
     def _save_variables(self):
         # Save used variables using json for next run
-        var_dict = {"source_dir_entry": self.src_dir,
-                    'save_dir_entry': self.save_dir,
+        var_dict = {"src_entry_text": self.src_dir,
+                    'save_entry_text': self.save_dir,
                     "EDF_channel_int": self.EDFchannel,
                     "stitch_ref_ch_int": self.stitch_ref_ch,
                     "imagej_loc_entry": self.imagej_loc}
@@ -264,7 +267,7 @@ class HiConAGUI:
             Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
         else:
 
-            self.measurement_dict, self.config_files, self.files = self._get_measurement_from_src()
+            self.measurement_dict, self.files = self._get_measurement_from_src()
 
             # Clear existing widgets
             for widget in self.int_measurement_frame.winfo_children():
@@ -287,7 +290,6 @@ class HiConAGUI:
 
     def _get_measurement_from_src(self):
         measurement_dict = {}
-        config_files = {}
         files = {}
         for measurement in [f for f in os.listdir(self.src_dir) if (os.path.isdir(os.path.join(self.src_dir, f)) and f != "_configdata")]:
             measurement_path = os.path.join(self.src_dir, measurement)
@@ -301,16 +303,15 @@ class HiConAGUI:
             
             name = plate_name + " - " + measure_num[-1]
             measurement_dict[name] = guid 
-            config_files[guid] = opera_config_file
+
             files[guid] = cur_files
         
-        return dict(sorted(measurement_dict.items())), config_files, files
+        return dict(sorted(measurement_dict.items())), files
 
     def _get_measurement_to_process(self):
         measurement_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
-        # returns two dict. 1) key: guid, value: corresponding config file
-        # 2) key: guid, value: files
-        return dict(zip(measurement_to_process, [self.config_files[j] for j in measurement_to_process])), dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process]))    
+        # returns key: guid, value: files
+        return  dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process]))    
 
     def _define_processing(self):
         processing_selection = {'8bit': self.bit8_state.get(),
@@ -370,9 +371,8 @@ class HiConAGUI:
         else:
             return False
 
-
     def get_input(self):
-        return self.measurement_config_matched, self.measurement_files_matched, self.processing_selection
+        return self.measurement_files_matched, self.processing_selection
     
 
 if __name__ == "__main__":
@@ -383,9 +383,8 @@ if __name__ == "__main__":
     HiConA = HiConAGUI(root)
     root.mainloop()
 
-    measurements, files, processes = HiConA.get_input()
+    all_files, processes = HiConA.get_input()
 
-    print(measurements)
-    print(files)
+    print(all_files)
     print(processes)
     
