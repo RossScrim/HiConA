@@ -38,10 +38,6 @@ class HiConAGUI:
         selection_frame.columnconfigure(1, weight=0, minsize=600) # Processing frame
         selection_frame.columnconfigure(2, weight=0, minsize=200) # Analysis frame
 
-        tb.Label(selection_frame, text="Measurements", font=("Segoe UI", 14)).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
-        tb.Label(selection_frame, text="Processing Options", font=("Segoe UI", 14)).grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
-        tb.Label(selection_frame, text="Analysis Options", font=("Segoe UI", 14)).grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
-
         # Source dir and Save dir selection
         # Variables
         self.src_entry_text = tk.StringVar()
@@ -70,14 +66,13 @@ class HiConAGUI:
 
         # Update button
         self.confirm_button = tb.Button(source_frame, text="Update", command=self._update_selection)
-        self.confirm_button.grid(row=0, column=3, padx=10, pady=10, sticky=tk.E)
-
+        self.confirm_button.grid(row=1, column=3, padx=10, pady=10, sticky=tk.E)
 
         # Processing and Analysis selection
         # Measurements
         # Measurement list with scrollbar
         measurement_frame = tb.Frame(selection_frame, height=600, width=420)
-        measurement_frame.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NSEW)
+        measurement_frame.grid(row=0, column=0, padx=5, pady=5, sticky=tk.NSEW)
         measurement_frame.grid_propagate(False)
         measurement_frame.pack_propagate(False)
 
@@ -91,11 +86,10 @@ class HiConAGUI:
         self.canvas.create_window((0,0), window=self.int_measurement_frame, anchor=tk.NW)
         self.int_measurement_frame.bind("<Configure>", self._configurefunction)
 
-        self.measure_var_list = []
 
         # Processing options
         processing_frame = tb.Frame(selection_frame, height=600, width=400)
-        processing_frame.grid(row=1, column=1, padx=5, pady=10, sticky=tk.NSEW)
+        processing_frame.grid(row=0, column=1, padx=5, pady=10, sticky=tk.NSEW)
         processing_frame.grid_propagate(False)
         
 
@@ -160,7 +154,7 @@ class HiConAGUI:
 
         # Analysis Frames
         analysis_frame = tb.Frame(selection_frame, height=600, width=200)
-        analysis_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NSEW)
+        analysis_frame.grid(row=0, column=2, padx=5, pady=5, sticky=tk.NSEW)
         analysis_frame.grid_propagate(False)
 
         # Analysis Options
@@ -184,43 +178,7 @@ class HiConAGUI:
                                          variable=self.imagej_state)
         self.cellpose_check.grid(row=2, column=0, pady=5, sticky=tk.W)
 
-        # Confirm button
-        #self.buttonframe = tk.Frame(self.master)
-        #self.buttonframe.grid(row=3, column=0)
 
-        self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
-        self.confirm_button.grid(row=2, column=3, padx=0, pady=0, sticky=tk.E)
-
-
-    def _run_button(self):
-        self.imagej_loc = self.imagej_entry_text.get()
-        self.stitch_ref_ch = int(self.stitching_ch_int.get())
-        self.EDFchannel = int(self.edf_ch_int.get())
-        self.src_dir = self.src_entry_text.get()
-        self.save_dir = self.save_entry_text.get()
-
-        """Checks the choices have been made for directories and processing steps. """
-        if self.src_dir == "" or not self.src_dir.endswith("hs"):
-            Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
-        elif self.save_dir == "" or self.src_dir == self.save_dir:
-            Messagebox.show_info(title="Missing Information", message="Please choose a saving directory that's different from the source directory")
-        elif len(self.measure_var_list) == 0:
-            Messagebox.show_info(message="Please click on Update to see available measurements", title="Missing Information")
-        elif all(x.get() == 0 for x in self.measure_var_list):
-            Messagebox.show_info(message="Please select a measurement to analyse", title="Missing Information")
-        elif self.edfproj_text.get() == "ImageJ EDF" and self.EDFchannel == 0:
-            Messagebox.show_info(message="Please select a channel for the EDF process", title="Missing Information")
-        elif self.stitching_state.get() == 1 and self.stitch_ref_ch == 0:
-            Messagebox.show_info(message="Please select a reference channel for the stitching process", title="Missing Information")
-        elif (self.edfproj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
-            Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
-        else:
-            self._save_variables()
-
-            self.measurement_config_matched = self._get_measurement_to_process()
-            self.processing_selection = self._define_processing()
-
-            self.master.destroy()
 
     def _load_variables(self):
         self.saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
@@ -253,14 +211,13 @@ class HiConAGUI:
         if button == "save_button":
             save_dir = askdirectory(title="Choose saving directory for processed images")
             self.save_entry_text.set(save_dir)
-        if button == "imagej_button":
-            imagej_dir = askdirectory(title="Choose location for Fiji.app directory")
-            self.imagej_entry_text.set(imagej_dir)
         self._validate(button)
 
     def _update_selection(self):
         self.src_dir = self.src_entry_text.get()
         self.save_dir = self.save_entry_text.get()
+
+        self.measure_var_list = []
 
         self.measurement_dict, self.config_files = self._get_measurement_from_src()
 
@@ -302,22 +259,6 @@ class HiConAGUI:
         
         return dict(sorted(measurement_dict.items())), config_files
 
-    def _get_measurement_to_process(self):
-        measurement_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
-        return dict(zip(measurement_to_process, [self.config_files[j] for j in measurement_to_process])) # key: guid, value: corresponding config file       
-
-    def _define_processing(self):
-        processing_selection = {'8bit': self.bit8_state.get(),
-                                 'sep_ch': self.sep_ch_state.get(),
-                                 'edf_proj': self.edfproj_text.get(),
-                                 'EDF_channel': self.edf_ch_int.get(),
-                                 'stitching': self.stitching_state.get(),
-                                 'stitch_ref_ch': self.stitching_ch_int.get(),
-                                 'imagej_loc': self.imagej_entry_text.get(),
-                                 'cellpose': self.cellpose_state.get(),
-                                 'cellprofiler': self.cellprofiler_state.get(),
-                                 'imagej': self.imagej_state.get()}
-        return processing_selection
 
     def _validate(self, button):
         if button == "src_button":
@@ -363,22 +304,13 @@ class HiConAGUI:
             return True
         else:
             return False
-
-
-    def get_input(self):
-        return self.measurement_config_matched, self.processing_selection
     
 
 if __name__ == "__main__":
     print("Hej")
     root = tb.Window(themename="lumen", title="HiConA")
-    root.geometry("1400x950")
+    root.geometry("1400x900")
     root.bind_all("<MouseWheel>")
-    HiConA = HiConAGUI(root)
+    HiConAGUI(root)
     root.mainloop()
-
-    measurements, processes = HiConA.get_input()
-
-    print(measurements)
-    print(processes)
     

@@ -6,11 +6,12 @@ from PreProcessor import PreProcessor
 
 
 class HiConAWorkflowHandler:
-    def __init__(self, files, processes_to_run, config_file, save_dir):
+    def __init__(self, files, processes_to_run, config_file):
+        self.BFchannel = None
         self.files = files
-        self.save_dir = save_dir
+        self.save_dir = files.user_image_save_directory()
         self.processes_to_run = processes_to_run  # Dict with keys = process function name
-
+        
         # extract experimental information from config file
         self.config_file = config_file
         if self.config_file is not None:
@@ -26,20 +27,6 @@ class HiConAWorkflowHandler:
         field_nums = [int(f[f.index("f")+1:f.index("p")]) for f in image_names]
         return max(field_nums)
 
-    def _load_config_file(self):
-        return ConfigReader(
-            self.files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
-
-    def _load_images(self, filepaths):
-        im_arr = np.array([tifffile.imread(fp) for fp in filepaths])
-        self.ydim, self.xdim = im_arr.shape[-2], im_arr.shape[-1]
-        return im_arr
-
-    def _save_images(self, full_file_path, images, axes_order = "YX"):
-        tifffile.imwrite(full_file_path,
-                images,
-                imagej=True, metadata={'axes': f'{axes_order}'})
-
     def _well_save_dir(self, cur_well):
         well_save_dir = os.path.join(self.save_dir, cur_well)
         if not os.path.exists(well_save_dir):
@@ -54,7 +41,7 @@ class HiConAWorkflowHandler:
             axes += "C"
         if (self.planes > 1
                 and not self.processes_to_run["max_projection"]
-                and not self.processes_to_run[:"min_projection"]
+                and not self.processes_to_run["min_projection"]
                 and not self.processes_to_run["EDF_projection"]):
             axes += "Z"
         axes += "YX"
@@ -92,13 +79,17 @@ class HiConAWorkflowHandler:
         else:
             self._run_single_timepoint_pipeline(cur_well, well_save_dir)
 
+
     def _run_timelapse_pipeline(self, cur_well, well_save_dir):
         total_field_num = self._get_num_fov(cur_well)
+
+
         for cur_FOV in range(1, total_field_num + 1):
             current_images = []
             for cur_time in range(1, self.timepoints):
                 processed_image = self._load_process_fov(cur_well, cur_FOV, timepoint=cur_time)
                 current_images.append(processed_image)
+
             # Save images as timelapse stack
             time_lapse_image = np.stack(current_images, axis=0)
             save_name = f'{cur_well}_f{cur_FOV}_timelapse_hyperstack.tiff'

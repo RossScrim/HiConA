@@ -10,11 +10,13 @@ class FilePathHandler:
                                                      self.archived_data_path, r'.*\.kw\.txt')[0])
         self.archived_image_path = self.archived_data_path + "images"
         self.well_names = self._get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
+        self.user_image_save_directory = None
 
     def _get_name_from_regexstring(self, dir_path: str, str_pattern: str):
         matched_strings = []
         for file_name in sorted(os.listdir(dir_path)):
             match = re.search(str_pattern, file_name)
+
             if match:
                 matched_strings.append(match.group())
         return matched_strings
@@ -24,6 +26,9 @@ class FilePathHandler:
         well_path = os.path.join(self.archived_image_path, well_name)
         image_files = self._get_name_from_regexstring(well_path, pattern)
         return [os.path.join(well_path, file) for file in image_files]
+
+    def update_save_directory(self, new_save_path):
+        self.user_image_save_directory = new_save_path
 
     def create_dir(self, save_path):
         return os.makedirs(save_path, exist_ok=True)
