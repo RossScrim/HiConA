@@ -217,7 +217,7 @@ class HiConAGUI:
         else:
             self._save_variables()
 
-            self.measurement_config_matched = self._get_measurement_to_process()
+            self.measurement_config_matched, self.measurement_files_matched = self._get_measurement_to_process()
             self.processing_selection = self._define_processing()
 
             self.master.destroy()
@@ -264,7 +264,7 @@ class HiConAGUI:
             Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
         else:
 
-            self.measurement_dict, self.config_files = self._get_measurement_from_src()
+            self.measurement_dict, self.config_files, self.files = self._get_measurement_from_src()
 
             # Clear existing widgets
             for widget in self.int_measurement_frame.winfo_children():
@@ -288,11 +288,12 @@ class HiConAGUI:
     def _get_measurement_from_src(self):
         measurement_dict = {}
         config_files = {}
+        files = {}
         for measurement in [f for f in os.listdir(self.src_dir) if (os.path.isdir(os.path.join(self.src_dir, f)) and f != "_configdata")]:
             measurement_path = os.path.join(self.src_dir, measurement)
 
-            files = FilePathHandler(measurement_path)
-            opera_config_file = ConfigReader(files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
+            cur_files = FilePathHandler(measurement_path)
+            opera_config_file = ConfigReader(cur_files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
 
             plate_name = opera_config_file["PLATENAME"]
             measure_num = opera_config_file["MEASUREMENT"].split(" ")
@@ -301,12 +302,15 @@ class HiConAGUI:
             name = plate_name + " - " + measure_num[-1]
             measurement_dict[name] = guid 
             config_files[guid] = opera_config_file
+            files[guid] = cur_files
         
-        return dict(sorted(measurement_dict.items())), config_files
+        return dict(sorted(measurement_dict.items())), config_files, files
 
     def _get_measurement_to_process(self):
         measurement_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
-        return dict(zip(measurement_to_process, [self.config_files[j] for j in measurement_to_process])) # key: guid, value: corresponding config file       
+        # returns two dict. 1) key: guid, value: corresponding config file
+        # 2) key: guid, value: files
+        return dict(zip(measurement_to_process, [self.config_files[j] for j in measurement_to_process])), dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process]))    
 
     def _define_processing(self):
         processing_selection = {'8bit': self.bit8_state.get(),
@@ -368,7 +372,7 @@ class HiConAGUI:
 
 
     def get_input(self):
-        return self.measurement_config_matched, self.processing_selection
+        return self.measurement_config_matched, self.measurement_files_matched, self.processing_selection
     
 
 if __name__ == "__main__":
@@ -379,8 +383,9 @@ if __name__ == "__main__":
     HiConA = HiConAGUI(root)
     root.mainloop()
 
-    measurements, processes = HiConA.get_input()
+    measurements, files, processes = HiConA.get_input()
 
     print(measurements)
+    print(files)
     print(processes)
     
