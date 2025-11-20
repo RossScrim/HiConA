@@ -46,8 +46,8 @@ class HiConAGUI:
         # Variables
         self.src_entry_text = tk.StringVar()
         self.src_entry_text.set(self._set_variable("src_entry_text"))
-        self.save_entry_text = tk.StringVar()
-        self.save_entry_text.set(self._set_variable("save_entry_text"))
+        self.output_entry_text = tk.StringVar()
+        self.output_entry_text.set(self._set_variable("output_entry_text"))
 
         # Widgets
         src_label = tb.Label(source_frame, text="Source directory", font=("Segoe UI", 14))
@@ -59,14 +59,14 @@ class HiConAGUI:
         self.src_button = tb.Button(source_frame, text="...", command=lambda: self._get_directory("src_button"), bootstyle="secondary")
         self.src_button.grid(row=0, column=2, padx=10, pady=10)
 
-        self.save_label = tb.Label(source_frame, text="Saving directory", font=("Segoe UI", 14))
-        self.save_label.grid(row=1, column=0, padx=10, pady=10)
+        self.output_label = tb.Label(source_frame, text="Output directory", font=("Segoe UI", 14))
+        self.output_label.grid(row=1, column=0, padx=10, pady=10)
 
-        self.save_selected = ttk.Entry(source_frame, text=self.save_entry_text, width=70, state='readonly')
-        self.save_selected.grid(row=1, column=1, padx=10, pady=10)
+        self.output_selected = ttk.Entry(source_frame, text=self.output_entry_text, width=70, state='readonly')
+        self.output_selected.grid(row=1, column=1, padx=10, pady=10)
 
-        self.save_button = ttk.Button(source_frame, text="...", command=lambda: self._get_directory("save_button"), bootstyle="secondary")
-        self.save_button.grid(row=1, column=2, padx=10, pady=10)
+        self.output_button = ttk.Button(source_frame, text="...", command=lambda: self._get_directory("output_button"), bootstyle="secondary")
+        self.output_button.grid(row=1, column=2, padx=10, pady=10)
 
         # Update button
         self.confirm_button = tb.Button(source_frame, text="Update", command=self._update_selection)
@@ -187,9 +187,6 @@ class HiConAGUI:
         self.cellpose_check.grid(row=2, column=0, pady=5, sticky=tk.W)
 
         # Confirm button
-        #self.buttonframe = tk.Frame(self.master)
-        #self.buttonframe.grid(row=3, column=0)
-
         self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
         self.confirm_button.grid(row=2, column=3, padx=0, pady=0, sticky=tk.E)
 
@@ -199,13 +196,13 @@ class HiConAGUI:
         self.stitch_ref_ch = int(self.stitching_ch_int.get())
         self.EDFchannel = int(self.edf_ch_int.get())
         self.src_dir = self.src_entry_text.get()
-        self.save_dir = self.save_entry_text.get()
+        self.output_dir = self.output_entry_text.get()
 
         """Checks the choices have been made for directories and processing steps. """
         if self.src_dir == "" or not self.src_dir.endswith("hs"):
             Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
-        elif self.save_dir == "" or self.src_dir == self.save_dir:
-            Messagebox.show_info(title="Missing Information", message="Please choose a saving directory that's different from the source directory")
+        elif self.output_dir == "" or self.src_dir == self.output_dir:
+            Messagebox.show_info(title="Missing Information", message="Please choose an output directory that's different from the source directory")
         elif len(self.measure_var_list) == 0:
             Messagebox.show_info(message="Please click on Update to see available measurements", title="Missing Information")
         elif all(x.get() == 0 for x in self.measure_var_list):
@@ -240,7 +237,7 @@ class HiConAGUI:
     def _save_variables(self):
         # Save used variables using json for next run
         var_dict = {"src_entry_text": self.src_dir,
-                    'save_entry_text': self.save_dir,
+                    'output_entry_text': self.output_dir,
                     "EDF_channel_int": self.EDFchannel,
                     "stitch_ref_ch_int": self.stitch_ref_ch,
                     "imagej_loc_entry": self.imagej_loc}
@@ -253,9 +250,9 @@ class HiConAGUI:
         if button == "src_button":
             src_dir = askdirectory(title="Choose hs directory for images to be processed")
             self.src_entry_text.set(src_dir)
-        if button == "save_button":
+        if button == "output_button":
             save_dir = askdirectory(title="Choose saving directory for processed images")
-            self.save_entry_text.set(save_dir)
+            self.output_entry_text.set(save_dir)
         if button == "imagej_button":
             imagej_dir = askdirectory(title="Choose location for Fiji.app directory")
             self.imagej_entry_text.set(imagej_dir)
@@ -332,11 +329,11 @@ class HiConAGUI:
                 self.src_selected.config(bootstyle="danger")
             else:
                 self.src_selected.config(bootstyle="default")
-        elif button == "save_button":
-            if self.save_entry_text.get() == "" or self.src_entry_text.get() == self.save_entry_text.get():
-                self.save_selected.config(bootstyle="danger")
+        elif button == "output_button":
+            if self.output_entry_text.get() == "" or self.src_entry_text.get() == self.output_entry_text.get():
+                self.output_selected.config(bootstyle="danger")
             else:
-                self.save_selected.config(bootstyle="default")
+                self.output_selected.config(bootstyle="default")
 
     def _configurefunction(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
