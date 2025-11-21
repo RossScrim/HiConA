@@ -1,16 +1,19 @@
-from HiConA.GUI.GUI_source_window import SourceGUI
-from HiConA.GUI.GUI_selection_window import SelectionGUI
+import ttkbootstrap as tb
+from GUI.GUI_HiConA import HiConAGUI
+from Backend.HiConAWorkFlowHandler import HiConAWorkflowHandler
 
 def main():
-    source_window = SourceGUI()
-    source_input = source_window.get_input()
-    print(source_input)
+    root = tb.Window(themename="lumen", title="HiConA")
+    root.geometry("1400x950")
+    root.bind_all("<MouseWheel>")
+    HiConA = HiConAGUI(root)
+    root.mainloop()
 
-    selection_window = SelectionGUI(source_input)
-    measurements, processes = selection_window.get_input()
+    all_files, processes, output_dir = HiConA.get_input()
 
-    print(measurements)
-    print(processes)
+    for measurement_id in all_files.keys():
+        print("Processing measurement ID:", measurement_id)
+        HiConAWorkflowHandler(all_files[measurement_id], processes, output_dir).run()
 
 if __name__ == '__main__':
     main()

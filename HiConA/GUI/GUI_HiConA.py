@@ -106,7 +106,7 @@ class HiConAGUI:
         # Processing options
         self.bit8_state = tk.IntVar()
         self.sep_ch_state = tk.IntVar()
-        self.edfproj_text = tk.StringVar()
+        self.proj_text = tk.StringVar()
         self.edf_ch_int = tk.IntVar()
         self.edf_ch_int.set(self._set_variable("EDF_channel_int"))
         self.stitching_state = tk.IntVar()
@@ -115,7 +115,7 @@ class HiConAGUI:
 
         self.processing_options = {"8bit": self.bit8_state,
                                    "sep_ch": self.sep_ch_state,
-                                   "edf": self.edfproj_text,
+                                   "edf": self.proj_text,
                                    "stitching": self.stitching_state}
 
 
@@ -128,7 +128,7 @@ class HiConAGUI:
         self.sep_ch_check.grid(row=1, column=0, pady=5, sticky=tk.W)
 
         tb.Label(processing_frame, text="Extended Depth of Focus").grid(row=2, column=0, pady=20, sticky=tk.W)
-        self.proj_combo = tb.Combobox(processing_frame, textvariable=self.edfproj_text, width=12, 
+        self.proj_combo = tb.Combobox(processing_frame, textvariable=self.proj_text, width=12, 
                                       state='readonly', values=["None", "Maximum", "Minimum", "ImageJ EDF"])
         self.proj_combo.grid(row=2, column=1, pady=15, sticky=tk.W)
         self.proj_combo.current(0)
@@ -207,11 +207,11 @@ class HiConAGUI:
             Messagebox.show_info(message="Please click on Update to see available measurements", title="Missing Information")
         elif all(x.get() == 0 for x in self.measure_var_list):
             Messagebox.show_info(message="Please select a measurement to analyse", title="Missing Information")
-        elif self.edfproj_text.get() == "ImageJ EDF" and self.EDFchannel == 0:
+        elif self.proj_text.get() == "ImageJ EDF" and self.EDFchannel == 0:
             Messagebox.show_info(message="Please select a channel for the EDF process", title="Missing Information")
         elif self.stitching_state.get() == 1 and self.stitch_ref_ch == 0:
             Messagebox.show_info(message="Please select a reference channel for the stitching process", title="Missing Information")
-        elif (self.edfproj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
+        elif (self.proj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
         else:
             self._save_variables()
@@ -313,7 +313,7 @@ class HiConAGUI:
     def _define_processing(self):
         processing_selection = {'8bit': self.bit8_state.get(),
                                  'sep_ch': self.sep_ch_state.get(),
-                                 'edf_proj': self.edfproj_text.get(),
+                                 'proj': self.proj_text.get(),
                                  'EDF_channel': self.edf_ch_int.get(),
                                  'stitching': self.stitching_state.get(),
                                  'stitch_ref_ch': self.stitching_ch_int.get(),
@@ -343,7 +343,7 @@ class HiConAGUI:
 
     def _show_hidden_frame_bind(self, e): #add imageJ location appearing
             showimageJ = [0,0]
-            if self.edfproj_text.get() == "ImageJ EDF":
+            if self.proj_text.get() == "ImageJ EDF":
                 self.edf_frame.grid(row=3, columnspan=4, pady=10, sticky=tk.W)
                 showimageJ[0] = 1
             else:
@@ -369,7 +369,7 @@ class HiConAGUI:
             return False
 
     def get_input(self):
-        return self.measurement_files_matched, self.processing_selection
+        return self.measurement_files_matched, self.processing_selection, self.output_dir
     
 
 if __name__ == "__main__":
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     HiConA = HiConAGUI(root)
     root.mainloop()
 
-    all_files, processes = HiConA.get_input()
+    all_files, processes, output_dir = HiConA.get_input()
 
     print(all_files)
     print(processes)

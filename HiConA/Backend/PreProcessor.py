@@ -197,15 +197,15 @@ class PreProcessor:
         self.macro = arg_text + """open(preImagePath);\n""" + self.macro + """\nsaveAs("Tiff", postImagePath);"""
 
 
-    def process(self, max_proj=False, min_proj=False, edf_proj=False, edf_BFch=-1, to_8bit=False, imagej_loc="", imagej_proc_order="", imagej_after_stitching=False):
+    def process(self, proj=False, edf_BFch=-1, to_8bit=False, imagej_loc="", imagej_proc_order="", imagej_after_stitching=False):
         """Processes the image based on flags for specific operations."""
         if imagej_proc_order == "to stack":
             self.imagej_run_macro(stack=True)
-        if max_proj:
+        if proj=="Maximum":
             self.max_projection()
-        if min_proj:
+        if proj=="Minimum":
             self.min_projection()
-        if edf_proj:
+        if proj=="EDF":
             self.EDF_projection(edf_BFch, imagej_loc)
         if imagej_proc_order == "after MIP/EDF":
             self.imagej_run_macro(stack=False)
