@@ -217,7 +217,7 @@ class HiConAGUI:
         else:
             self._save_variables()
 
-            self.measurement_files_matched, self.measurement_xml_files_matched = self._get_measurement_to_process()
+            self.measurement_files_matched, self.measurement_xml_readers_matched = self._get_measurement_to_process()
             self.processing_selection = self._define_processing()
 
             self.master.destroy()
@@ -265,7 +265,7 @@ class HiConAGUI:
             Messagebox.show_info(title="Missing Information", message="Please choose the hs source directory")
         else:
 
-            self.measurement_dict, self.files, self.xml_files = self._get_measurement_from_src()
+            self.measurement_dict, self.files, self.xml_readers = self._get_measurement_from_src()
 
             # Clear existing widgets
             for widget in self.int_measurement_frame.winfo_children():
@@ -312,7 +312,7 @@ class HiConAGUI:
     def _get_measurement_to_process(self):
         measurement_to_process = [self.measurement_dict[list(self.measurement_dict.keys())[i]] for i in range(len(self.measurement_dict)) if self.measure_var_list[i].get() == 1]
         # returns key: guid, value: files
-        return  dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process])), dict(zip(measurement_to_process, [self.xml_files[j] for j in measurement_to_process]))
+        return  dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process])), dict(zip(measurement_to_process, [self.xml_readers[j] for j in measurement_to_process]))
 
     def _define_processing(self):
         processing_selection = {'8bit': self.bit8_state.get(),
@@ -373,7 +373,7 @@ class HiConAGUI:
             return False
 
     def get_input(self):
-        return self.measurement_files_matched, self.measurement_xml_files_matched, self.processing_selection, self.output_dir
+        return self.measurement_files_matched, self.measurement_xml_readers_matched, self.processing_selection, self.output_dir
     
 
 if __name__ == "__main__":

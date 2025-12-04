@@ -9,7 +9,7 @@ def main():
     HiConA = HiConAGUI(root)
     root.mainloop()
 
-    all_files, all_xml_files, processes, output_dir = HiConA.get_input()
+    all_files, all_xml_readers, processes, output_dir = HiConA.get_input()
 
     for measurement_id in all_files.keys():
         print("Processing measurement ID:", measurement_id)
