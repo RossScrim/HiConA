@@ -8,6 +8,9 @@ class FilePathHandler:
         self.archived_data_config = os.path.join(self.archived_data_path,
                                                  self._get_name_from_regexstring(
                                                      self.archived_data_path, r'.*\.kw\.txt')[0])
+        self.archived_data_config_xml = os.path.join(self.archived_data_path,
+                                                     self._get_name_from_regexstring(
+                                                         self.archived_data_path, r'.*\.xml')[0])
         self.archived_image_path = self.archived_data_path + "images"
         self.well_names = self._get_name_from_regexstring(self.archived_image_path, r'r(\d+)c(\d+)')
 
