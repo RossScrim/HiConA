@@ -8,7 +8,7 @@ import os
 import json
 
 from HiConA.Utilities.ConfigReader import ConfigReader
-from HiConA.Utilities.ConfigReader import XMLConfigReader
+from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
 from HiConA.Utilities.FileManagement import FilePathHandler
 
 class HiConAGUI:
