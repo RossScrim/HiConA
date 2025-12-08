@@ -16,10 +16,14 @@ class XMLConfigReader:
         camera_px_size = float(self.tree.find('.//ns:InstrumentDescription/ns:Cameras/ns:Camera/ns:PixelSizeX', self.ns).text)*(10**6) #um
         binning = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:SimpleChannel/ns:CameraSetting/ns:BinningX', self.ns).text)
         M_objective = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:ObjectiveMagnification', self.ns).text)
-        M_factor = 1.87 #From observation and manual calculations
+        M_factor = 1.087 #From observation and manual calculations
 
+        print(camera_px_size, binning, M_objective)
         return (camera_px_size*binning)/(M_objective*M_factor) #um
 
+    def get_pixel_scale(self):
+        return self.pixel_size
+        
     def get_channel_order(self):
         return [channel.text for channel in self.tree.findall('.//ns:Sequence/ns:Record/ns:Channel', self.ns)]
     
@@ -56,7 +60,7 @@ class XMLConfigReader:
         file = os.path.join(output_dir, f'TileConfiguration_{well_name}.txt')
         
         fields = well_layout[well_name]
-        print(fields)
+        #print(fields)
         
         with open(file, 'w') as f:
             f.write('\n'.join(top_text))

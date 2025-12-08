@@ -38,7 +38,6 @@ class PreProcessor:
         self.image_array = np.min(self.image_array, axis=0)
         return self
     
-
     def _imagej_EDF(self):
         imagej_loc = self.saved_variables["imagej_loc_entry"]
 
