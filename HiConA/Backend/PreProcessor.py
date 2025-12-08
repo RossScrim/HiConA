@@ -1,6 +1,6 @@
 import numpy as np
 import tifffile
-
+import imagej
 import scyjava
 import tempfile
 import re
