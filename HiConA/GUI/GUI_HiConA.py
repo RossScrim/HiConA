@@ -10,10 +10,10 @@ import json
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
 from HiConA.Utilities.FileManagement import FilePathHandler
+from HiConA.Backend.HiConAImageJMacro import ImageJProcessor
 
 class HiConAGUI:
     def __init__(self, window):
-        print("Running")
         self.master = window
         self._load_variables()
 
@@ -119,7 +119,6 @@ class HiConAGUI:
                                    "edf": self.proj_text,
                                    "stitching": self.stitching_state}
 
-
         self.bit8_check = tb.Checkbutton(processing_frame, text = "Convert to 8-bit",
                                          variable=self.bit8_state)
         self.bit8_check.grid(row=0, column=0, pady=5, sticky=tk.W)
@@ -167,25 +166,35 @@ class HiConAGUI:
         analysis_frame.grid_propagate(False)
 
         # Analysis Options
-        self.cellprofiler_state = tk.IntVar() 
         self.imagej_state = tk.IntVar()
-        self.cellpose_state = tk.IntVar()     
+        self.args_text = tk.StringVar()
+        self.args_text.set(self._set_variable("args_text"))
+        self.macro_text = tk.StringVar()
+        self.macro_text.set(self._set_variable("macro_text"))
+        self.imagej_interactive_state = tk.IntVar()  
+        self.imagej_showUI_state = tk.IntVar()
 
-        self.analysis_options = {"cellprofiler": self.cellpose_state,
-                                 "cellpose": self.cellpose_state,
+        self.cellpose_state = tk.IntVar()
+        self.cellpose_model_text = tk.StringVar()
+        self.cellpose_diameter_double = tk.DoubleVar()
+        self.cellpose_channel_int = tk.IntVar()
+        self.cellpose_flow_threshold_double = tk.DoubleVar()
+        self.cellpose_cellprob_threshold_double = tk.DoubleVar()
+        self.cellpose_niter_int = tk.IntVar()
+        self.cellpose_batchsize_int = tk.IntVar()
+
+        self._set_default_cellpose()
+
+        self.analysis_options = {"cellpose": self.cellpose_state,
                                  "imagej": self.imagej_state}
 
         self.imagej_check = tb.Checkbutton(analysis_frame, text = "ImageJ",
-                                         variable=self.cellpose_state)
+                                         variable=self.imagej_state, command=lambda: self._show_imagej_macro_settings(True))
         self.imagej_check.grid(row=0, column=0, pady=5, sticky=tk.W)  
         
-        self.cellprofiler_check = tb.Checkbutton(analysis_frame, text = "Cellprofiler",
-                                         variable=self.cellprofiler_state)
-        self.cellprofiler_check.grid(row=1, column=0, pady=5, sticky=tk.W)  
-
         self.cellpose_check = tb.Checkbutton(analysis_frame, text = "Cellpose",
-                                         variable=self.imagej_state)
-        self.cellpose_check.grid(row=2, column=0, pady=5, sticky=tk.W)
+                                         variable=self.cellpose_state, command=lambda: self._show_cellpose_settings(True))
+        self.cellpose_check.grid(row=1, column=0, pady=5, sticky=tk.W)
 
         # Confirm button
         self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
@@ -241,7 +250,9 @@ class HiConAGUI:
                     'output_entry_text': self.output_dir,
                     "EDF_channel_int": self.EDFchannel,
                     "stitch_ref_ch_int": self.stitch_ref_ch,
-                    "imagej_loc_entry": self.imagej_loc}
+                    "imagej_loc_entry": self.imagej_loc,
+                    "macro_text": self.macro,
+                    "arg_text": self.args}
             
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
@@ -257,6 +268,12 @@ class HiConAGUI:
         if button == "imagej_button":
             imagej_dir = askdirectory(title="Choose location for Fiji.app directory")
             self.imagej_entry_text.set(imagej_dir)
+        if button == "macro_button":
+            macro_file = askopenfilename(title="Choose the .ijm macro file")
+            self.macro_text.set(macro_file)
+        if button == "args_button":
+            args_file = askopenfilename(title="Choose the .json arguments file")
+            self.args_text.set(args_file)
         self._validate(button)
 
     def _update_selection(self):
@@ -338,6 +355,12 @@ class HiConAGUI:
                 self.output_selected.config(bootstyle="danger")
             else:
                 self.output_selected.config(bootstyle="default")
+        elif button == "macro_button":
+            if self.macro_text.get() == "" or not self.macro_text.get().endswith("ijm"):
+                self.macro_selected.config(bootstyle="danger")
+        elif button == "args_button":
+            if self.args_text.get() == "" or not self.args_text.get().endswith("json"):
+                self.args_selected.config(bootstyle="danger")
 
     def _configurefunction(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -345,7 +368,7 @@ class HiConAGUI:
     def _on_mousewheel(self, event):
         self.root.yview_scroll(int(-1*(event.delta/120)), "units")
 
-    def _show_hidden_frame_bind(self, e): #add imageJ location appearing
+    def _show_hidden_frame_bind(self, e):
             showimageJ = [0,0]
             if self.proj_text.get() == "ImageJ EDF":
                 self.edf_frame.grid(row=3, columnspan=4, pady=10, sticky=tk.W)
@@ -366,8 +389,158 @@ class HiConAGUI:
             else:
                 self.imagej_frame.grid_forget()
 
-    def _validate_int(self,x):
-        if x.isdigit() and x != 0:
+    def _show_imagej_macro_settings(self, e):
+        if self.imagej_state.get() == 0:
+            return
+        imagej_window = tb.Toplevel(self.master)
+        imagej_window.title("Settings for ImageJ macro")
+        imagej_window.geometry("1210x380")
+
+        imagej_window.transient(self.master)
+
+
+        # Widgets
+        macro_label = tb.Label(imagej_window, text="Macro file", font=("Segoe UI", 14))
+        macro_label.grid(row=0, column=0, pady=10, sticky=tk.E)
+
+        self.macro_selected = tb.Entry(imagej_window, text=self.macro_text, width=60, state='readonly')
+        self.macro_selected.grid(row=0, column=1, padx=10, pady=10, sticky=tk.W)
+
+        macro_button = tb.Button(imagej_window, text="...", command=lambda: self._get_directory("macro_button"), bootstyle="secondary")
+        macro_button.grid(row=0, column=2, padx=10, pady=10, sticky=tk.W)
+
+        args_label = tb.Label(imagej_window, text="Arguments file", font=("Segoe UI", 14))
+        args_label.grid(row=1, column=0, pady=10, sticky=tk.E)
+
+        self.args_selected = tb.Entry(imagej_window, text=self.args_text, width=60, state='readonly')
+        self.args_selected.grid(row=1, column=1, padx=10, pady=10, sticky=tk.W)
+
+        args_button = tb.Button(imagej_window, text="...", command=lambda: self._get_directory("args_button"), bootstyle="secondary")
+        args_button.grid(row=1, column=2, padx=10, pady=10, sticky=tk.W)
+
+        imagej_label = tb.Label(imagej_window, text="ImageJ.app Location", font=("Segoe UI", 14))
+        imagej_label.grid(row=2, column=0, pady=10, sticky=tk.E)
+
+        imagej_entry = tb.Entry(imagej_window, text=self.imagej_entry_text, width=60, state='readonly')
+        imagej_entry.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
+
+        imagej_button = tb.Button(imagej_window, text="...", command=lambda: self._get_directory("imagej_button"), bootstyle="secondary")
+        imagej_button.grid(row=2, column=2, padx=10, pady=10, sticky=tk.W)
+
+        interactive_check = tb.Checkbutton(imagej_window, text = "Interactive Mode",
+                                         variable=self.imagej_interactive_state)
+        interactive_check.grid(row=3, column=1, pady=10, sticky=tk.W)
+
+        showIU_check = tb.Checkbutton(imagej_window, text="Show UI",
+                                        variable=self.imagej_showUI_state)
+        showIU_check.grid(row=4, column=1, pady=10, sticky=tk.W)
+
+        confirm_button = tb.Button(imagej_window, text="Confirm", command=lambda: self._imagej_confirm(imagej_window), bootstyle="info")
+        confirm_button.grid(row=5, column=3, padx=0, pady=0, sticky=tk.E)
+
+    def _imagej_confirm(self, window):
+        imagej_config_dict = {"imagej_loc": self.imagej_entry_text.get(),
+                         "macro_file": self.macro_text.get(),
+                         "args_file": self.args_text.get(),
+                         "interactive": self.imagej_interactive_state.get(),
+                         "show_UI": self.imagej_showUI_state.get()}
+        
+        with open(os.path.join(os.path.dirname(__file__), "imagej_config.json"), "w+") as f:
+            json.dump(imagej_config_dict, f)
+
+        window.destroy()
+
+    def _set_default_cellpose(self):
+        self.cellpose_model_text.set('cyto3')
+        self.cellpose_diameter_double.set(0)
+        self.cellpose_channel_int.set(0)
+        self.cellpose_flow_threshold_double.set(0.4)
+        self.cellpose_cellprob_threshold_double.set(0.0)
+        self.cellpose_niter_int.set(0)
+        self.cellpose_batchsize_int.set(64)
+
+    def _show_cellpose_settings(self, e):
+        if self.cellpose_state.get() == 0:
+            return
+        cellpose_window = tb.Toplevel(self.master)
+        cellpose_window.title("Settings for Cellpose segmentation")
+        cellpose_window.geometry("530x680")
+
+        cellpose_window.transient(self.master)
+
+        # Widgets
+        tb.Label(cellpose_window, text="Cellpose v3.1.0", font=("Segoe UI", 12)).grid(row=0, column=1, pady=10, sticky=tk.EW)
+        default_button = tb.Button(cellpose_window, text="Set default", command=self._set_default_cellpose, bootstyle='secondary')
+        default_button.grid(row=1, column=0, pady=10, sticky=tk.E)
+
+        model_label = tb.Label(cellpose_window, text="Cellpose model", font=("Segoe UI", 10))
+        model_label.grid(row=2, column=0, pady=10, sticky=tk.E)
+        model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=10, 
+                                      state='readonly', values=["cyto3", "cyto2", "cyto", "nuclei"])
+        model_combobox.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
+        model_combobox.current(0)
+
+        diameter_label = tb.Label(cellpose_window, text="Diameter", font=("Segoe UI", 10))
+        diameter_label.grid(row=3, column=0, pady=10, sticky=tk.E)
+        diameter_entry = tb.Entry(cellpose_window, text=self.cellpose_diameter_double, width=4, background="White", validate='focus', 
+                                      validatecommand=(self.master.register(self._validate_double), '%P'))
+        diameter_entry.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
+
+        channel_label = tb.Label(cellpose_window, text="Channel", font=("Segoe UI", 10))
+        channel_label.grid(row=4, column=0, pady=10, sticky=tk.E)
+        channel_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_int, width=4, background="White", validate='focus',
+                                 validatecommand=(self.master.register(self._validate_int), '%P'))
+        channel_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+
+        flow_treshold_label = tb.Label(cellpose_window, text="Flow threshold", font=("Segoe UI", 10))
+        flow_treshold_label.grid(row=5, column=0, pady=10, sticky=tk.E)
+        flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='focus',
+                                        validatecommand=(self.master.register(self._validate_double), '%P'))
+        flow_threshold_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
+        
+        cellprob_treshold_label = tb.Label(cellpose_window, text="Cellprob threshold", font=("Segoe UI", 10))
+        cellprob_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
+        cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='focus',
+                                            validatecommand=(self.master.register(self._validate_double), '%P'))
+        cellprob_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
+
+        niter_label = tb.Label(cellpose_window, text="Niter", font=("Segoe UI", 10))
+        niter_label.grid(row=7, column=0, pady=10, sticky=tk.E)
+        niter_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_niter_int, width=4, background="White", validate='focus',
+                                            validatecommand=(self.master.register(self._validate_int), '%P'))
+        niter_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
+
+        batchsize_label = tb.Label(cellpose_window, text="Batchsize", font=("Segoe UI", 10))
+        batchsize_label.grid(row=8, column=0, pady=10, sticky=tk.E)
+        batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='focus',
+                                            validatecommand=(self.master.register(self._validate_int), '%P'))
+        batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
+        
+        confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
+        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
+
+    def _cellpose_confirm(self, window):
+        cellpose_config_dict = {'model': self.cellpose_model_text.get(),
+                                'diameter': self.cellpose_diameter_double.get(),
+                                'channel': self.cellpose_channel_int.get(),
+                                'flow_threshold': self.cellpose_flow_threshold_double.get(),
+                                'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
+                                'niter': self.cellpose_niter_int.get(),
+                                'batchsize': self.cellpose_batchsize_int.get()}
+        
+        with open(os.path.join(os.path.dirname(__file__), "cellpose_config.json"), "w+") as f:
+            json.dump(cellpose_config_dict, f)
+
+        window.destroy()
+
+    def _validate_int(self,x): #TODO Check validation for Cellpose entries
+        if isinstance(x, int) and x != 0:
+            return True
+        else:
+            return False
+        
+    def _validate_double(self,x):
+        if isinstance(x, (int, float)):
             return True
         else:
             return False
@@ -377,7 +550,6 @@ class HiConAGUI:
     
 
 if __name__ == "__main__":
-    print("Hej")
     root = tb.Window(themename="lumen", title="HiConA")
     root.geometry("1400x950")
     root.bind_all("<MouseWheel>")
