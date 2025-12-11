@@ -8,6 +8,7 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
+from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
 
@@ -15,14 +16,23 @@ class HiConAPreProcessor:
     def __init__(self, images, config, xml_reader):
         self.image_array = np.array(images)
         self.saved_variables = self._load_variables()
+        # extract experimental information from config file
+        self.image_array = np.array(images)
+        self.image_y_dim, self.image_x_dim = get_xy_axis_from_image(images)
+        self.num_planes = config["PLANES"]
 
-    def process(self, projection, to_8bit):
+        if type(config["CHANNEL"]) is list:
+            self.num_channels = len(config["CHANNEL"])
+        else:
+            self.num_channels = 1
+
+    def process(self, projection, to_8bit, EDF_channel):
         if projection == "Maximum":
             self._max_projection()
         elif projection == "Minimum":
             self._min_projection()
         elif projection == "ImageJ EDF":
-            self._imagej_EDF()
+            self._imagej_EDF(EDF_channel)
         if to_8bit:
             self._convert_to_8bit()
 
@@ -33,8 +43,17 @@ class HiConAPreProcessor:
     def _min_projection(self):
         self.image_array = np.min(self.image_array, axis=0)
         return self
-    
-    def _imagej_EDF(self):
+
+    def _convert_to_8bit(self):
+        image_8bit = []
+        for image in self.image_array:
+            image_8bit.append(np.uint8((image / np.max(image)) * 255))
+
+          # Stack the list back into a single numpy array
+        self.image_array = np.array(image_8bit)
+        return self
+
+    def _imagej_EDF(self, EDF_channel_num):
         imagej_loc = self.saved_variables["imagej_loc_entry"]
         plugins_dir = os.path.join(imagej_loc, "plugins")
         scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
@@ -43,7 +62,7 @@ class HiConAPreProcessor:
 
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
-        bf_temp = os.path.join(temp_dir.name, "ref_ch.tiff")
+        edf_temp = os.path.join(temp_dir.name, "ref_ch.tiff")
         proc_temp = os.path.join(temp_dir.name, "proc.tif")
 
         # EDF macro
@@ -51,19 +70,19 @@ class HiConAPreProcessor:
 
         #TODO Continue from here finishing the EDF part
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
-        bf_channel = BF_ch #Change which channel is the bf_channel, 0-indexed.
+        EDF_channel = EDF_channel_num #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
-            if ch == bf_channel:
-                tifffile.imwrite(bf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
+            if ch == EDF_channel:
+                tifffile.imwrite(edf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
                 ij.py.run_macro(macro, arg)
 
-                bf_array = []
-                bf_array.append(tifffile.imread(proc_temp)) #Change where the processed_bf.tif is saved.
-                bf_array = np.array(bf_array)
+                edf_array = []
+                edf_array.append(tifffile.imread(proc_temp)) #Change where the processed_bf.tif is saved.
+                edf_array = np.array(edf_array)
 
-                processed_image[ch] = bf_array
+                processed_image[ch] = edf_array
             else:
                 #tifffile.imwrite("fluo.tiff", cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
                 processed_image[ch] = np.max(cur_image, axis=0)
@@ -104,10 +123,11 @@ class HiConAPreProcessor:
         close("*");
         """
 
-        arg = {
-            "BFImagePath": bf_temp,
-            "procImagePath": proc_temp
-        }
+
+        #arg = {
+          #  "BFImagePath": bf_temp,
+         #   "procImagePath": proc_temp
+        #}
 
         return macro, arg
     

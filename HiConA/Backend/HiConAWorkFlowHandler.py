@@ -94,12 +94,12 @@ class HiConAWorkflowHandler:
         try:
             processed_images = self._preprocessor(reshaped_images)
 
-            if self.processes_to_run.get("Cellpose"):
-                processed_images = HiConACellpose(processed_images)
-            elif self.processes_to_run.get("ImageJ"):
-                processed_images = HiConAImageJ(processed_images)
-            else:
-                raise ValueError("Choose exactly one: Cellpose=True or ImageJ=True")
+            #if self.processes_to_run.get("Cellpose"):
+             #   processed_images = HiConACellpose(processed_images)
+            #elif self.processes_to_run.get("ImageJ"):
+                #processed_images = HiConAImageJ(processed_images)
+            #else:
+             #   raise ValueError("Choose exactly one: Cellpose=True or ImageJ=True")
 
         except ValueError as e:
             # Error handling catches issues during segmentation setup
@@ -112,10 +112,11 @@ class HiConAWorkflowHandler:
     def _preprocessor(self, images):
         """Performs image normalization, projection, or EDF before segmentation."""
         # Get image dimensions
-        processor = HiConAPreProcessor(image, self.config_file)
+        processor = HiConAPreProcessor(images, self.config_file)
         processor.process(proj=self.processes_to_run.get("proj"),
                           edf_channel=self.processes_to_run.get("EDF_channel"),
                           to_8bit=self.processes_to_run.get("8bit", False)
+                          )
         return processor.get_image()
 
     # --- 5. Low-Level Helpers (Utility Functions) ---
@@ -144,7 +145,7 @@ class HiConAWorkflowHandler:
         return max(field_nums)
 
     def _prepare_hyperstack(self, images):
-        ydim, xdim = get_xy_axis_from_image(images)
+
         reshaped_images = np.reshape(images, [self.planes, self.channels, ydim, xdim])
         return reshaped_images
 
