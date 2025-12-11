@@ -11,12 +11,10 @@ import json
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
 
-class PreProcessor:
+class HiConAPreProcessor:
     def __init__(self, images, config, xml_reader):
         self.image_array = np.array(images)
-
         self.saved_variables = self._load_variables()
-
 
     def process(self, projection, to_8bit):
         if projection == "Maximum":
@@ -25,10 +23,8 @@ class PreProcessor:
             self._min_projection()
         elif projection == "ImageJ EDF":
             self._imagej_EDF()
-
         if to_8bit:
             self._convert_to_8bit()
-
 
     def _max_projection(self):
         self.image_array = np.max(self.image_array, axis=0)
@@ -40,7 +36,6 @@ class PreProcessor:
     
     def _imagej_EDF(self):
         imagej_loc = self.saved_variables["imagej_loc_entry"]
-
         plugins_dir = os.path.join(imagej_loc, "plugins")
         scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
         ij = imagej.init(imagej_loc, mode="interactive")
@@ -125,8 +120,6 @@ class PreProcessor:
         else:
             return None
     
-
-
 
 if __name__ == "__main__":
     pass

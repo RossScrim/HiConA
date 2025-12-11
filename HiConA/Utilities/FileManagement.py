@@ -18,7 +18,6 @@ class FilePathHandler:
         matched_strings = []
         for file_name in sorted(os.listdir(dir_path)):
             match = re.search(str_pattern, file_name)
-
             if match:
                 matched_strings.append(match.group())
         return matched_strings
