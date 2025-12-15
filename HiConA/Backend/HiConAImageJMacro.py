@@ -20,7 +20,7 @@ class ImageJProcessor:
 
         self.config_var = self._load_imagej_config()
 
-        self.macro, self.arg, self.temp_dir = self.generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
+        self.macro, self.arg, self.temp_dir = self._generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
         
 
     def _load_imagej_config(self):
@@ -68,12 +68,14 @@ class ImageJProcessor:
         scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
         if self.config_var["interactive"] == 1:
             self.ij = imagej.init(imagej_loc, mode="interactive")
-            self.ij.ui().showUI()
         else:
             self.ij = imagej.init(imagej_loc)
+        
+        if self.config_var["show_UI"] == 1:
+                self.ij.ui().showUI()
 
     
-    def generate_macro(self, macro_file, args_file, cleanup_temp = 0):
+    def _generate_macro(self, macro_file, args_file, cleanup_temp = 0):
         with open(macro_file, "r") as f:
             macro = f.read()
 
@@ -113,3 +115,19 @@ class ImageJProcessor:
     
     def get_image(self):
         return self.image_array
+    
+
+if __name__ == "__main__":
+    image_path = r"Z:\Emma\MMC poster\Processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05\Stitched\r04c05.tif"
+    im_arr = np.array([tifffile.imread(image_path)])
+
+    imagejprocessor = ImageJProcessor(im_arr[0])
+
+    imagejprocessor.process()
+
+    processed_image = imagejprocessor.get_image()
+
+    tifffile.imwrite(os.path.join(r"C:\Users\ewestlund\Documents\GitHub Projects\HiConA\HiConA\Test Data", "test_image.tif"), 
+                     processed_image,
+                     imagej=True, 
+                     metadata={'axes': 'CYX'})
