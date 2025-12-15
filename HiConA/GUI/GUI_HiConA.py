@@ -223,6 +223,8 @@ class HiConAGUI:
             Messagebox.show_info(message="Please select a reference channel for the stitching process", title="Missing Information")
         elif (self.proj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
+        elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
+            Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
         else:
             self._save_variables()
 
@@ -250,9 +252,7 @@ class HiConAGUI:
                     'output_entry_text': self.output_dir,
                     "EDF_channel_int": self.EDFchannel,
                     "stitch_ref_ch_int": self.stitch_ref_ch,
-                    "imagej_loc_entry": self.imagej_loc,
-                    "macro_text": self.macro,
-                    "arg_text": self.args}
+                    "imagej_loc_entry": self.imagej_loc}
             
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
@@ -340,7 +340,6 @@ class HiConAGUI:
                                  'stitch_ref_ch': self.stitching_ch_int.get(),
                                  'imagej_loc': self.imagej_entry_text.get(),
                                  'cellpose': self.cellpose_state.get(),
-                                 'cellprofiler': self.cellprofiler_state.get(),
                                  'imagej': self.imagej_state.get()}
         return processing_selection
 
