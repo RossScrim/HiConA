@@ -8,7 +8,7 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
-class ImageJProcessor:
+class HiConAImageJProcessor:
     def __init__(self, images):
         self.image_array = np.array(images)
         # Get this some other way?
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     image_path = r"Z:\Emma\MMC poster\Processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05\Stitched\r04c05.tif"
     im_arr = np.array([tifffile.imread(image_path)])
 
-    imagejprocessor = ImageJProcessor(im_arr[0])
+    imagejprocessor = HiConAImageJProcessor(im_arr[0])
 
     imagejprocessor.process()
 
