@@ -10,7 +10,6 @@ import json
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
 from HiConA.Utilities.FileManagement import FilePathHandler
-from HiConA.Backend.HiConAImageJMacro import ImageJProcessor
 
 class HiConAGUI:
     def __init__(self, window):
@@ -182,6 +181,7 @@ class HiConAGUI:
         self.cellpose_cellprob_threshold_double = tk.DoubleVar()
         self.cellpose_niter_int = tk.IntVar()
         self.cellpose_batchsize_int = tk.IntVar()
+        self.cellpose_process_choice_text = tk.StringVar()
 
         self._set_default_cellpose()
 
@@ -225,6 +225,8 @@ class HiConAGUI:
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
         elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
             Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
+        elif (self.cellpose_process_choice_text.get() == "stitched image" and self.stitching_state.get() == 0):
+            Messagebox.show_info(message="If you want to run Cellpose on a Stitched image, please select Stitching in Processing", title="Correct selection")
         else:
             self._save_variables()
 
@@ -463,7 +465,7 @@ class HiConAGUI:
             return
         cellpose_window = tb.Toplevel(self.master)
         cellpose_window.title("Settings for Cellpose segmentation")
-        cellpose_window.geometry("530x680")
+        cellpose_window.geometry("560x740")
 
         cellpose_window.transient(self.master)
 
@@ -474,7 +476,7 @@ class HiConAGUI:
 
         model_label = tb.Label(cellpose_window, text="Cellpose model", font=("Segoe UI", 10))
         model_label.grid(row=2, column=0, pady=10, sticky=tk.E)
-        model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=10, 
+        model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=15, 
                                       state='readonly', values=["cyto3", "cyto2", "cyto", "nuclei"])
         model_combobox.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
         model_combobox.current(0)
@@ -514,9 +516,16 @@ class HiConAGUI:
         batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='focus',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
         batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
+
+        process_label = tb.Label(cellpose_window, text="Process", font=("Segoe UI", 10))
+        process_label.grid(row=9, column=0, pady=20, sticky=tk.E)
+        process_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_process_choice_text, width=15,
+                                    state='readonly', values=["stitched image", "each FOV"])
+        process_combobox.grid(row=9, column=1, padx=10, pady=20, sticky=tk.W)
+        process_combobox.current(0)
         
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
-        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
+        confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
 
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
@@ -525,7 +534,8 @@ class HiConAGUI:
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),
-                                'batchsize': self.cellpose_batchsize_int.get()}
+                                'batch_size': self.cellpose_batchsize_int.get(),
+                                'process': self.cellpose_process_choice_text.get()}
         
         with open(os.path.join(os.path.dirname(__file__), "cellpose_config.json"), "w+") as f:
             json.dump(cellpose_config_dict, f)
