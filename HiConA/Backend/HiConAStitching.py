@@ -1,11 +1,6 @@
 import imagej
 import os
-import re
 import scyjava
-import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter import messagebox
-from tkinter.filedialog import askdirectory
 from shutil import copy
 import json
 
@@ -18,13 +13,13 @@ class HiConAStitching:
         imagej_loc = self.saved_variables["imagej_loc_entry"]
         ref_ch = self.saved_variables["stitch_ref_ch_int"]
 
-        well_path = stitching_dir["well_path"]
+        well_path = stitching_dir["well_output_dir"]
         well_name = os.path.basename(os.path.normpath(well_path))
         xml_reader = stitching_dir["xml_reader"]
         
         self._generate_TileConfiguration(xml_reader, well_path, well_name, ref_ch)
         self._initiate_imagej(imagej_loc)
-        self._process_well(well_path, well_name, ref_ch)
+        self._stitch_well(well_path, well_name, ref_ch)
 
     def _initiate_imagej(self, imagej_loc):
         plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins

@@ -37,8 +37,8 @@ class HiConAWorkflowHandler:
         well_output_dir = create_directory(os.path.join(self.output_dir, cur_well))
         if self.processes_to_run.get("stitching", 1):
             self._run_stitching_pipeline(cur_well, well_output_dir)
-
-        self._run_pipeline(cur_well, well_output_dir)
+        else:
+            self._run_pipeline(cur_well, well_output_dir)
 
     def _run_pipeline(self, cur_well, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
@@ -80,18 +80,28 @@ class HiConAWorkflowHandler:
                 preprocessed = self._apply_preprocess(preprocessed)
                 images_to_stack.append(preprocessed)
 
-            stitched_images = HiConAStitching(stitching_dict)
-            processed = self._apply_advanced_processes(stitched_images)
+                #TODO Look at 3D. Currently only works for 2D images
+                for ch in range(self.channels):
+                    ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
+                    split_image = preprocessed[ch,:,:]
+                    save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
+                    self._save_fov(save_split_name, split_image)
+
+            #TODO What should we do with the images_to_stack?
             # Stack multiple timepoints into a single hyperstack if needed
-            if len(processed) > 1:
-                final_image = np.stack(processed, axis=0)
+            if len(images_to_stack) > 1:
+                final_image = np.stack(images_to_stack, axis=0)
                 suffix = "timelapse_hyperstack"
             else:
-                final_image = processed[0]
+                final_image = images_to_stack[0]
                 suffix = "hyperstack"
 
-            save_name = os.path.join(well_output_dir, f"{cur_well}_f{t}_{suffix}.tiff")
-            self._save_fov(save_name, final_image)
+            #save_name = os.path.join(well_output_dir, f"{cur_well}_f{t}_{suffix}.tiff")
+            #self._save_fov(save_name, final_image)
+            
+
+            HiConAStitching(stitching_dict)
+            #TODO processed = self._apply_advanced_processes(stitched_images)
 
 
     def _apply_preprocess(self, images):
@@ -120,14 +130,12 @@ class HiConAWorkflowHandler:
         """Determines the dimension order string (e.g., 'TCZYX') for saving the hyperstack."""
         axes = ""
         proj = self.processes_to_run.get("proj")
-
         if self.timepoints > 1:
             axes += "T"
-        if self.channels:
-            axes += "C"
-        if (self.planes > 1
-                and proj is "None"):
+        if (self.planes > 1 and proj == "None"):
             axes += "Z"
+        if self.channels and not self.processes_to_run.get("stitching", 1):
+            axes += "C"
         axes += "YX"
 
         return axes
@@ -136,7 +144,7 @@ class HiConAWorkflowHandler:
         """Determines the maximum FOV number from the files in a well's directory."""
         well_path = self.files.get_file_path(well_name)
         image_names = os.listdir(well_path)
-        field_nums = [int(f[f.index("f")+1:f.index("p")]) for f in image_names]
+        field_nums = [int(f[f.find("f")+1:f.find("p")]) for f in image_names if not f.endswith(".db")]
         return max(field_nums)
 
     def _prepare_hyperstack(self, images):

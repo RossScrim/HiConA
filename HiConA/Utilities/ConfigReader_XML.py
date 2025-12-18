@@ -14,11 +14,14 @@ class XMLConfigReader:
     
     def _get_pixel_size(self):
         camera_px_size = float(self.tree.find('.//ns:InstrumentDescription/ns:Cameras/ns:Camera/ns:PixelSizeX', self.ns).text)*(10**6) #um
-        binning = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:SimpleChannel/ns:CameraSetting/ns:BinningX', self.ns).text)
+        try:
+            binning = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:SimpleChannel/ns:CameraSetting/ns:BinningX', self.ns).text)
+        except:
+            binning = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:Record/ns:Channels/ns:Channel/ns:CameraSetting/ns:BinningX', self.ns).text)
         M_objective = int(self.tree.find('.//ns:Experiment/ns:Exposures/ns:Exposure/ns:ObjectiveMagnification', self.ns).text)
         M_factor = 1.087 #From observation and manual calculations
 
-        print(camera_px_size, binning, M_objective)
+        #print(camera_px_size, binning, M_objective)
         return (camera_px_size*binning)/(M_objective*M_factor) #um
 
     def get_pixel_scale(self):
@@ -67,11 +70,11 @@ class XMLConfigReader:
             f.write('\n')
 
             for i, field in enumerate(fields):
-                image_name = well_name+'f'+str(i+1).zfill(2)
+                image_name = well_name+'_f'+str(i+1).zfill(2)
                 x = field[0]/self.pixel_size
                 y = -field[1]/self.pixel_size # Inverted for ImageJ Stitching
 
-                f.write(image_name+'.tif'+f'; ; ({x}, {y})\n')
+                f.write(image_name+'.tiff'+f'; ; ({x}, {y})\n')
 
         f.close()
     

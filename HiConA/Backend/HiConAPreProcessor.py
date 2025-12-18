@@ -67,9 +67,9 @@ class HiConAPreProcessor:
 
         #TODO Continue from here finishing the EDF part
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
-        edf_channel = EDF_channel_num #Change which channel is the bf_channel, 0-indexed.
+        edf_channel = EDF_channel_num-1 #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
-            cur_image = self.image_array[:,ch,:,:] # only get one channel
+            cur_image = self.image_array[:,ch,:,:] # only get one channel  
             if ch == edf_channel:
                 tifffile.imwrite(self.edf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
