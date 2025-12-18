@@ -14,8 +14,8 @@ def save_images(full_file_path, images, pixel_size_um, axes_order="YX"):
                         'axes': f'{axes_order}',
                         'PhysicalSizeX': pixel_size_um,
                         'PhysicalSizeY': pixel_size_um,
-                        'PhysicalSizeXUnit': 'µm',
-                        'PhysicalSizeYUnit': 'µm'})
+                        'PhysicalSizeXUnit': 'um',
+                        'PhysicalSizeYUnit': 'um'})
 
 def create_directory(output_path: str) -> str:
     os.makedirs(output_path, exist_ok=True)

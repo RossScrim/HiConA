@@ -1,6 +1,8 @@
+from typing import Any
+
 import numpy as np
 
-def get_xy_axis_from_image(image: np.array) -> int:
+def get_xy_axis_from_image(image: np.array) -> tuple[Any, Any]:
     """
     Extracts the 'YX' axis from a given image axes as a int.
 
