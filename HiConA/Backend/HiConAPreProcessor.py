@@ -3,9 +3,7 @@ import tifffile
 import imagej
 import scyjava
 import tempfile
-import re
 import os
-from tkinter.filedialog import askdirectory
 import json
 
 from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
@@ -13,11 +11,10 @@ from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
 
 class HiConAPreProcessor:
-    def __init__(self, images, config, xml_reader):
+    def __init__(self, images, config):
         self.image_array = np.array(images)
         self.saved_variables = self._load_variables()
         # extract experimental information from config file
-        self.image_array = np.array(images)
         self.image_y_dim, self.image_x_dim = get_xy_axis_from_image(images)
         self.num_planes = config["PLANES"]
 
@@ -62,24 +59,24 @@ class HiConAPreProcessor:
 
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
-        edf_temp = os.path.join(temp_dir.name, "ref_ch.tiff")
-        proc_temp = os.path.join(temp_dir.name, "proc.tif")
+        self.edf_temp = os.path.join(temp_dir.name, "ref_ch.tiff")
+        self.proc_temp = os.path.join(temp_dir.name, "proc.tif")
 
         # EDF macro
         macro, arg = self._get_edf_macro()
 
         #TODO Continue from here finishing the EDF part
         processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
-        EDF_channel = EDF_channel_num #Change which channel is the bf_channel, 0-indexed.
+        edf_channel = EDF_channel_num #Change which channel is the bf_channel, 0-indexed.
         for ch in range(self.num_channels):
             cur_image = self.image_array[:,ch,:,:] # only get one channel
-            if ch == EDF_channel:
-                tifffile.imwrite(edf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
+            if ch == edf_channel:
+                tifffile.imwrite(self.edf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
                 ij.py.run_macro(macro, arg)
 
                 edf_array = []
-                edf_array.append(tifffile.imread(proc_temp)) #Change where the processed_bf.tif is saved.
+                edf_array.append(tifffile.imread(self.proc_temp)) #Change where the processed_bf.tif is saved.
                 edf_array = np.array(edf_array)
 
                 processed_image[ch] = edf_array
@@ -100,10 +97,10 @@ class HiConAPreProcessor:
     def _get_edf_macro(self):
     # EDF macro
         macro = """
-        @ String BFImagePath
+        @ String edfImagePath
         @ String procImagePath
 
-        open(BFImagePath); 
+        open(edfImagePath); 
         //print("image opened");
         run("EDF Easy mode", "quality='2' topology='0' show-topology='off' show-view='off'");
         //print("EDF run");
@@ -123,14 +120,12 @@ class HiConAPreProcessor:
         close("*");
         """
 
-
-        #arg = {
-          #  "BFImagePath": bf_temp,
-         #   "procImagePath": proc_temp
-        #}
-
+        arg = {
+            "edfImagePath": self.edf_temp,
+            "procImagePath": self.proc_temp
+        }
         return macro, arg
-    
+
     def _load_variables(self):
         saved_variables_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "saved_variables.json")
         if os.path.isfile(saved_variables_f):
@@ -139,7 +134,9 @@ class HiConAPreProcessor:
                 return saved_var
         else:
             return None
-    
+
+    def get_image(self):
+        return self.image_array
 
 if __name__ == "__main__":
     pass

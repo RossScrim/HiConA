@@ -1,4 +1,6 @@
 import ttkbootstrap as tb
+
+from HiConA.Backend.HiConAWorkFlowHandler import HiConAWorkflowHandler
 from Utilities.ConfigReader import ConfigReader
 
 from GUI.GUI_HiConA import HiConAGUI
@@ -22,7 +24,7 @@ def main():
         print("Processing measurement ID:", measurement_id)
         print(all_files[measurement_id])
         print(processes)
-        #HiConAWorkflowHandler(all_xml_readers[measurement_id], all_files[measurement_id], processes, output_dir).run()
+        HiConAWorkflowHandler(all_xml_readers[measurement_id], all_files[measurement_id], processes, output_dir).run()
 
 
 if __name__ == '__main__':

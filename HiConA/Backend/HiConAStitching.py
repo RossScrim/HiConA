@@ -128,7 +128,7 @@ class HiConAStitching:
 
         self.ij.py.run_macro(macro, args)
     
-    def _process_well(self, well_path, well_name, ref_ch):
+    def _stitch_well(self, well_path, well_name, ref_ch):
         stitched_path = os.path.join(well_path, "Stitched")
         self._create_dir(stitched_path)
 

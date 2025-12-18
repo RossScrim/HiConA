@@ -13,7 +13,6 @@ class HiConAWorkflowHandler:
         self.files = files
         self.processes_to_run = processes_to_run  # Dict with keys = process function name
         self.xml_reader = xml_reader
-
         # extract experimental information from config file
         self.config_file = ConfigReader(files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
         if self.config_file is not None:
@@ -24,7 +23,6 @@ class HiConAWorkflowHandler:
 
         self.output_dir = os.path.join(output_dir, self.measurement_name)
         self.axes = self._get_image_axes()
-
     # --- 2. Public Interface ---
 
     def run(self):
@@ -34,93 +32,90 @@ class HiConAWorkflowHandler:
             self._process_well(cur_well)
 
     # --- 3. High-Level Flow Control (Well/Pipeline Management) ---
-
     def _process_well(self, cur_well):
-        """Creates the output directory and runs the pipeline for a single well."""
+        """Process a single well, including optional stitching and advanced processing."""
         well_output_dir = create_directory(os.path.join(self.output_dir, cur_well))
-        self.stitching_dict = {"well_path": well_output_dir,
-                               "xml_reader": self.xml_reader}
+        if self.processes_to_run.get("stitching", 1):
+            self._run_stitching_pipeline(cur_well, well_output_dir)
+
         self._run_pipeline(cur_well, well_output_dir)
 
     def _run_pipeline(self, cur_well, well_output_dir):
-        """Manages the iteration over FOVs and timepoints for a well."""
-        total_field_num = self._get_num_fov(cur_well)
-
-        # Determine timepoints: single-timepoint -> [None], timelapse -> range(1, N+1)
+        """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
+        total_fov = self._get_num_fov(cur_well)
         timepoints = range(1, self.timepoints + 1) if self.timepoints > 1 else [None]
 
-        for cur_FOV in range(1, total_field_num + 1):
+        for fov in range(1, total_fov + 1):
             images_to_stack = []
+            for t in timepoints:
+                images = self._load_fov(cur_well, fov, t)
+                preprocessed = self._apply_preprocess(images)
+                self._apply_advanced_processes(preprocessed)
+                images_to_stack.append(preprocessed)
 
-            for cur_time in timepoints:
-                images = self._load_fov(cur_well, cur_FOV, timepoint=cur_time)
-                processed = self._process_fov(images, well_name=cur_well, FOV=cur_FOV, timepoint=cur_time)
-
-                if processed is None:
-                    # Fail-fast for single-timepoint, log warning for timelapse
-                    if len(timepoints) == 1:
-                        raise RuntimeError(f"Processing failed for FOV {cur_FOV}, well {cur_well}")
-                    else:
-                        print(f"Warning: processing failed for FOV {cur_FOV}, timepoint {cur_time}")
-
-                images_to_stack.append(processed)
-
-            # Handle single image or stack
+            print(np.shape(images_to_stack))
+            # Stack multiple timepoints into a single hyperstack if needed
             if len(images_to_stack) > 1:
                 final_image = np.stack(images_to_stack, axis=0)
-            else:
-                final_image = images_to_stack[0]
-
-            # Build save name
-            if self.timepoints > 1:
                 suffix = "timelapse_hyperstack"
             else:
+                final_image = images_to_stack[0]
+                suffix = "hyperstack"
+            print(np.shape(final_image), "final image shape")
+            save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
+            self._save_fov(save_name, final_image)
+
+    def _run_stitching_pipeline(self, cur_well, well_output_dir):
+        """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
+        total_fov = self._get_num_fov(cur_well)
+        timepoints = range(1, self.timepoints + 1) if self.timepoints > 1 else [None]
+
+        stitching_dict = {"well_output_dir": well_output_dir,
+                          "xml_reader":self.xml_reader}
+
+        for t in timepoints:
+            images_to_stack = []
+            for fov in range(1, total_fov + 1):
+                preprocessed = self._load_fov(cur_well, fov, t)
+                preprocessed = self._apply_preprocess(preprocessed)
+                images_to_stack.append(preprocessed)
+
+            stitched_images = HiConAStitching(stitching_dict)
+            processed = self._apply_advanced_processes(stitched_images)
+            # Stack multiple timepoints into a single hyperstack if needed
+            if len(processed) > 1:
+                final_image = np.stack(processed, axis=0)
+                suffix = "timelapse_hyperstack"
+            else:
+                final_image = processed[0]
                 suffix = "hyperstack"
 
-            save_name = f"{cur_well}_f{cur_FOV}_{suffix}.tiff"
-            self._save_image(well_output_dir, save_name, final_image)
+            save_name = os.path.join(well_output_dir, f"{cur_well}_f{t}_{suffix}.tiff")
+            self._save_fov(save_name, final_image)
 
-        # Apply stitching if requested
-        if self.processes_to_run.get("Stitching"):
-            HiConAStitching(self.stitching_dict)
 
-    # --- 4. Mid-Level Processing (Step Logic) ---
-
-    def _process_fov(self, images, well_name=None, FOV=None, timepoint=None):
-        """
-        Processes a single FOV (and optional timepoint) using the selected segmentation method.
-        """
-        reshaped_images = self._prepare_hyperstack(images)
-        try:
-            processed_images = self._preprocessor(reshaped_images)
-
-            #if self.processes_to_run.get("Cellpose"):
-             #   processed_images = HiConACellpose(processed_images)
-            #elif self.processes_to_run.get("ImageJ"):
-                #processed_images = HiConAImageJ(processed_images)
-            #else:
-             #   raise ValueError("Choose exactly one: Cellpose=True or ImageJ=True")
-
-        except ValueError as e:
-            # Error handling catches issues during segmentation setup
-            print(f"Error processing well {well_name}, FOV {FOV}, timepoint {timepoint}: {e}")
-            return None
-
-        # Return after try/except so it's always reachable
-        return processed_images
-
-    def _preprocessor(self, images):
-        """Performs image normalization, projection, or EDF before segmentation."""
-        # Get image dimensions
-        processor = HiConAPreProcessor(images, self.config_file)
-        processor.process(proj=self.processes_to_run.get("proj"),
-                          edf_channel=self.processes_to_run.get("EDF_channel"),
-                          to_8bit=self.processes_to_run.get("8bit", False)
-                          )
+    def _apply_preprocess(self, images):
+        """Normalize, project, or EDF the hyperstack before any further processing."""
+        hyperstack = self._prepare_hyperstack(images)
+        print(np.shape(hyperstack))
+        processor = HiConAPreProcessor(hyperstack, self.config_file)
+        processor.process(
+            projection=self.processes_to_run.get("proj"),
+            EDF_channel=self.processes_to_run.get("EDF_channel"),
+            to_8bit=self.processes_to_run.get("8bit", False)
+        )
         return processor.get_image()
 
-    # --- 5. Low-Level Helpers (Utility Functions) ---
+    def _apply_advanced_processes(self, hyperstack):
+        """Optional segmentation (Cellpose/ImageJ) on single FOV or stitched hyperstack."""
+        if self.processes_to_run.get("cellpose", 1):
+            # Example placeholder: replace with your actual Cellpose class
+            HiConACellpose(hyperstack)
+        elif self.processes_to_run.get("imagej", 1):
+            # Example placeholder: replace with your actual ImageJ processing
+            HiConAImageJ(hyperstack)
 
+    # --- 5. Low-Level Helpers (Utility Functions) ---
     def _get_image_axes(self):
         """Determines the dimension order string (e.g., 'TCZYX') for saving the hyperstack."""
         axes = ""
@@ -130,11 +125,11 @@ class HiConAWorkflowHandler:
             axes += "T"
         if self.channels:
             axes += "C"
-
         if (self.planes > 1
-                and proj not in "None"):
+                and proj is "None"):
             axes += "Z"
         axes += "YX"
+
         return axes
 
     def _get_num_fov(self, well_name):
@@ -145,8 +140,8 @@ class HiConAWorkflowHandler:
         return max(field_nums)
 
     def _prepare_hyperstack(self, images):
-
-        reshaped_images = np.reshape(images, [self.planes, self.channels, ydim, xdim])
+        y_axis, x_axis = get_xy_axis_from_image(images)
+        reshaped_images = np.reshape(images, [self.planes, self.channels, y_axis, x_axis])
         return reshaped_images
 
     def _load_fov(self,well_name, FOV, timepoint=None):
@@ -162,10 +157,12 @@ class HiConAWorkflowHandler:
         paths = self.files.get_opera_phenix_images_from_FOV(well_name, image_pattern)
         return load_images(paths)
 
-    def _save_image(self, directory, filename, image):
+    def _save_fov(self, full_path, image):
+        pixel_size_um = self.xml_reader.get_pixel_scale()
+        print(pixel_size_um)
+        print(self.axes)
         """Saves the processed hyperstack to disk."""
-        full_path = os.path.join(directory, filename)
-        save_images(full_path, image, self.axes)
+        save_images(full_path, image, pixel_size_um, self.axes)
         return full_path
 
 if __name__ == "__main__":
