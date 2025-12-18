@@ -64,7 +64,7 @@ class HiConAStitching:
         //@ String chName
 
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
-        saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tif");
+        saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
         close("*");
         """
 
@@ -87,7 +87,7 @@ class HiConAStitching:
 
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".registered.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
 
-        saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tif");
+        saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
         close("*");
         """
 
@@ -111,7 +111,7 @@ class HiConAStitching:
 
         run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
 
-        saveAs("Tiff", orgDir+File.separator+wellName+".tif");
+        saveAs("Tiff", orgDir+File.separator+wellName+".tiff");
 
         close("*");
         """

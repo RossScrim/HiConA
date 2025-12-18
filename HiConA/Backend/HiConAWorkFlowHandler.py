@@ -1,11 +1,13 @@
 import numpy as np
 import os
+import tifffile
 
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
 from HiConA.Backend.HiConAPreProcessor import HiConAPreProcessor
 from HiConA.Backend.HiConAStitching import HiConAStitching
 from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
+from HiConA.Backend.HiConAImageJMacro import HiConAImageJProcessor
 
 
 class HiConAWorkflowHandler:
@@ -38,9 +40,14 @@ class HiConAWorkflowHandler:
         if self.processes_to_run.get("stitching", 1):
             self._run_stitching_pipeline(cur_well, well_output_dir)
         else:
-            self._run_pipeline(cur_well, well_output_dir)
+            self._run_preprocessing_pipeline(cur_well, well_output_dir)
 
-    def _run_pipeline(self, cur_well, well_output_dir):
+        if self.processes_to_run.get("imagej", 1):
+            self._run_imagej_pipeline(cur_well, well_output_dir)
+        elif self.processes_to_run.get("cellpose", 1):
+            self._run_cellpose_pipeline(cur_well, well_output_dir)
+
+    def _run_preprocessing_pipeline(self, cur_well, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
         total_fov = self._get_num_fov(cur_well)
         timepoints = range(1, self.timepoints + 1) if self.timepoints > 1 else [None]
@@ -50,7 +57,6 @@ class HiConAWorkflowHandler:
             for t in timepoints:
                 images = self._load_fov(cur_well, fov, t)
                 preprocessed = self._apply_preprocess(images)
-                self._apply_advanced_processes(preprocessed)
                 images_to_stack.append(preprocessed)
 
             print(np.shape(images_to_stack))
@@ -65,6 +71,14 @@ class HiConAWorkflowHandler:
             save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
             self._save_fov(save_name, final_image)
 
+            #TODO Add function for splitting channels, both timelapse data and 2D and 3D
+            #if self.processes_to_run.get("stitching", 1) or self.processes_to_run.get("sep_ch", 1):
+            #    for ch in range(self.channels):
+            #        ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
+            #        split_image = final_image[ch,:,:]
+            #        save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
+            #        self._save_fov(save_split_name, split_image)
+
     def _run_stitching_pipeline(self, cur_well, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
         total_fov = self._get_num_fov(cur_well)
@@ -74,11 +88,14 @@ class HiConAWorkflowHandler:
                           "xml_reader":self.xml_reader}
 
         for t in timepoints:
-            images_to_stack = []
             for fov in range(1, total_fov + 1):
                 preprocessed = self._load_fov(cur_well, fov, t)
                 preprocessed = self._apply_preprocess(preprocessed)
-                images_to_stack.append(preprocessed)
+
+                #final_image = preprocessed
+                #suffix = "hyperstack"
+                #save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
+                #self._save_fov(save_name, final_image)
 
                 #TODO Look at 3D. Currently only works for 2D images
                 for ch in range(self.channels):
@@ -87,22 +104,21 @@ class HiConAWorkflowHandler:
                     save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
                     self._save_fov(save_split_name, split_image)
 
-            #TODO What should we do with the images_to_stack?
-            # Stack multiple timepoints into a single hyperstack if needed
-            if len(images_to_stack) > 1:
-                final_image = np.stack(images_to_stack, axis=0)
-                suffix = "timelapse_hyperstack"
-            else:
-                final_image = images_to_stack[0]
-                suffix = "hyperstack"
-
-            #save_name = os.path.join(well_output_dir, f"{cur_well}_f{t}_{suffix}.tiff")
-            #self._save_fov(save_name, final_image)
-            
-
             HiConAStitching(stitching_dict)
             #TODO processed = self._apply_advanced_processes(stitched_images)
 
+    def _run_imagej_pipeline(self, cur_well, well_output_dir):
+        image_path = os.path.join(well_output_dir, "Stitched", cur_well+".tiff")
+        image = np.array(tifffile.imread(image_path))[0]
+        imagejprocessor = HiConAImageJProcessor(image)
+        imagejprocessor.process()
+        processed_image = imagejprocessor.get_image()
+
+        save_name = os.path.join(well_output_dir, "Stitched", f"{cur_well}_imagejprocessed.tiff")
+        self._save_fov(save_name, processed_image)
+
+    def _run_cellpose_pipeline(self, cur_well, well_output_dir):
+        pass
 
     def _apply_preprocess(self, images):
         """Normalize, project, or EDF the hyperstack before any further processing."""
