@@ -23,7 +23,7 @@ class HiConAPreProcessor:
         else:
             self.num_channels = 1
 
-    def process(self, projection, to_8bit, EDF_channel):
+    def process(self, projection, EDF_channel, to_8bit,):
         if projection == "Maximum":
             self._max_projection()
         elif projection == "Minimum":
