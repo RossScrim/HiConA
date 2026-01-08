@@ -12,12 +12,16 @@ import tkinter.ttk as ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 
-class HiConACellpose:
-    def __init__(self, measurement_path):
+class HiConACellposeProcessor:
+    def __init__(self, image, image_path):
         self.cellpose_config = self._load_cellpose_config()
         self.seg_ch = self.cellpose_config["channel"]
         self.diameter_data = []
-        self.measurement_path = measurement_path
+
+        self.image = image
+        self.image_path = image_path
+
+        self.measurement_path = self._get_measurement_path()
     
     def _load_cellpose_config(self):
         cellpose_config_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "cellpose_config.json")
@@ -27,6 +31,10 @@ class HiConACellpose:
                 return cellpose_config
         else:
             return None
+        
+
+    def _get_measurement_path(self):
+        pass
         
     def _create_dummy_mask(self, image_shape):
         dummy_mask = np.zeros(image_shape[:2], dtype=np.uint8)
@@ -57,7 +65,7 @@ class HiConACellpose:
             masks, flows, styles, diams = model.eval(
                 image,
                 diameter = self.cellpose_config['diameter'],
-                channels = [0, 0], #currently only process in grey scale, https://cellpose.readthedocs.io/en/v3.1.1.1/settings.html
+                channels = [self.seg_ch, 0], #currently only uses one channel, https://cellpose.readthedocs.io/en/v3.1.1.1/settings.html
                 flow_threshold = self.cellpose_config['flow_threshold'],
                 cellprob_threshold = self.cellpose_config['cellprob_threshold'],
                 niter = self.cellpose_config['niter'],
@@ -140,7 +148,7 @@ if __name__ == "__main__":
     measurement_path = r"Z:\Emma\Training Images Florian NEW\25Ope42 - Plate2"
     wells = [w for w in os.listdir(measurement_path) if os.path.isdir(os.path.join(measurement_path, w))]
     
-    measurement_cellpose = HiConACellpose(measurement_path)
+    measurement_cellpose = HiConACellposeProcessor(measurement_path)
     for well in wells[:1]:
         well_path = os.path.join(measurement_path, well)
         measurement_cellpose.process(well_path)

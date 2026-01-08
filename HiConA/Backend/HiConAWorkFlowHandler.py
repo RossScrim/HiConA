@@ -8,6 +8,7 @@ from HiConA.Backend.HiConAPreProcessor import HiConAPreProcessor
 from HiConA.Backend.HiConAStitching import HiConAStitching
 from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
 from HiConA.Backend.HiConAImageJMacro import HiConAImageJProcessor
+from HiConA.Backend.HiConACellpose import HiConACellposeProcessor
 
 
 class HiConAWorkflowHandler:
@@ -42,16 +43,18 @@ class HiConAWorkflowHandler:
         if self.run_preprocess():
             self._run_preprocessing_pipeline(cur_well, well_output_dir)
 
-        if self.processes_to_run.get("stitching", 1):
-            self._run_stitching_pipeline(cur_well, well_output_dir)
-
-        if self.processes_to_run.get("imagej", 1):
-            self._run_imagej_pipeline(cur_well, well_output_dir)
-        elif self.processes_to_run.get("cellpose", 1):
-            self._run_cellpose_pipeline(cur_well, well_output_dir)
+        if self.processes_to_run.get("stitching", 0):
+            self._run_stitching_pipeline(well_output_dir)
+        
+        if self.processes_to_run.get("imagej", 0) == 1 or self.processes_to_run.get("cellpose", 0) == 1:
+            self._run_advanced_pipeline(cur_well, well_output_dir)
+        #if self.processes_to_run.get("imagej", 0):
+        #    self._run_imagej_pipeline(cur_well, well_output_dir)
+        #elif self.processes_to_run.get("cellpose", 0):
+        #    self._run_cellpose_pipeline(cur_well, well_output_dir)
 
     def _run_preprocessing_pipeline(self, cur_well, well_output_dir):
-        """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
+        """Loop over FOVs and timepoints, preprocess, and save."""
         total_fov = self._get_num_fov(cur_well)
         timepoints = range(1, self.timepoints + 1) if self.timepoints > 1 else [None]
 
@@ -73,13 +76,14 @@ class HiConAWorkflowHandler:
             print(np.shape(final_image), "final image shape")
 
             # How do we handle multiple timepoints?
-            if self.processes_to_run("stitching", 1) or self.processes_to_run.get("sep_ch", 1):
+            if self.processes_to_run("stitching", 0) or self.processes_to_run.get("sep_ch", 1):
                     self._save_split_ch_images(final_image, fov, cur_well, well_output_dir)
 
             save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
             self._save_fov(save_name, final_image)
 
     def _save_split_ch_images(self, image, fov, cur_well, well_output_dir):
+        """Loop over channels to save each channel individually. To be used for stitching and for split channels."""
         for ch in range(self.channels):
                     ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
                     split_image = image[ch,:,:]
@@ -87,32 +91,46 @@ class HiConAWorkflowHandler:
                     self._save_fov(save_split_name, split_image)
 
     def _check_preprocess_selected(self):
-        if self.processes_to_run.get('8bit') == 1 or self.processes_to_run.get('sep_ch') or self.processes_to_run.get('proj') != "None" or self.processes_to_run.get("stitching"):
+        """Helper function to just determine if any preprossing will be performed"""
+        if self.processes_to_run.get('8bit') == 1 or self.processes_to_run.get('sep_ch') == 1 or self.processes_to_run.get('proj') != "None" or self.processes_to_run.get("stitching") == 1:
             return True
     
-    def _run_stitching_pipeline(self, cur_well, well_output_dir):
+    def _run_stitching_pipeline(self, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
         stitching_dict = {"well_output_dir": well_output_dir,
                           "xml_reader":self.xml_reader}
         # How do we handle multiple timepoints?
         HiConAStitching(stitching_dict)
 
-    def _run_imagej_pipeline(self, cur_well, well_output_dir):
+    def _run_advanced_pipeline(self, cur_well, well_output_dir):
+        """Process stitched image or all fovs with user chosen ImageJ macro."""
         #TODO Set up process for single fov and stitched image.
-        if self.processes_to_run.get("stitched"):
-            # process stitched image
-            pass
-        else:
-            # process each fov individually
-            pass
-        image_path = os.path.join(well_output_dir, "Stitched", cur_well+".tiff")
-        image = np.array(tifffile.imread(image_path))[0]
-        imagejprocessor = HiConAImageJProcessor(image)
-        imagejprocessor.process()
-        processed_image = imagejprocessor.get_image()
+        if self.processes_to_run.get("cellpose", 0) == 1:
+            save_dir = create_directory(os.path.join(well_output_dir, "cellpose"))
+            process = "cellpose"
+        elif self.processes_to_run.get("imagej", 0) == 1:
+            save_dir = create_directory(os.path.join(well_output_dir, "imagej"))
+            process = "imagej"
 
-        save_name = os.path.join(well_output_dir, "Stitched", f"{cur_well}_imagejprocessed.tiff")
-        self._save_fov(save_name, processed_image)
+        if self.processes_to_run.get("advanced_process_order") == "stitched image":
+            image_paths_to_process = [os.path.join(well_output_dir, "Stitched", cur_well+".tiff")]
+        elif self.processes_to_run.get("advanced_process_order") == "each FOV":
+            image_paths_to_process = [os.path.join(well_output_dir, im) for im in os.listdir(well_output_dir) if im.endswith(".tiff")]
+        elif self.processes_to_run.get("advanced_process_order") == "all available images":
+            image_paths_to_process = [os.path.join(well_output_dir, "Stitched", cur_well+".tiff")] + [os.path.join(well_output_dir, im) for im in os.listdir(well_output_dir) if im.endswith(".tiff")]
+        
+        processed_images = {}
+
+        for image_path in image_paths_to_process:
+            image = np.array(tifffile.imread(image_path))[0]
+            
+            processed = self._apply_advanced_processes(image, image_path, process)
+            processed_images[image_path] = processed
+        
+        for image_path in processed_images.keys:
+            image_name = os.path.basename(image_path).split(".")[0]
+            save_name = os.path.join(save_dir, f"{image_name}_analysed.tiff")
+            self._save_fov(save_name, processed_images[image_path])
 
     def _run_cellpose_pipeline(self, cur_well, well_output_dir):
         pass
@@ -129,14 +147,23 @@ class HiConAWorkflowHandler:
         )
         return processor.get_image()
 
-    def _apply_advanced_processes(self, hyperstack):
-        """Optional segmentation (Cellpose/ImageJ) on single FOV or stitched hyperstack."""
-        if self.processes_to_run.get("cellpose", 1):
+    def _apply_imagejprocess(self, image):
+        """Run user created ImageJ macro"""
+        imagej_processor = HiConAImageJProcessor(image)
+        imagej_processor.process()
+        return imagej_processor.get_image()
+
+    def _apply_advanced_processes(self, hyperstack, image_path, process):
+        """Run cellpose or ImageJ macro on selected image"""
+        if process == "cellpose":
             # Example placeholder: replace with your actual Cellpose class
-            HiConACellpose(hyperstack)
-        elif self.processes_to_run.get("imagej", 1):
+            advanced_processor = HiConACellposeProcessor(hyperstack, image_path)
+        elif process == "imagej":
             # Example placeholder: replace with your actual ImageJ processing
-            HiConAImageJ(hyperstack)
+            advanced_processor = HiConAImageJProcessor(hyperstack)
+
+        advanced_processor.process()
+        return advanced_processor.get_image()
 
     # --- 5. Low-Level Helpers (Utility Functions) ---
     def _get_image_axes(self):

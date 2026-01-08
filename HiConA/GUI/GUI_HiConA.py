@@ -94,7 +94,7 @@ class HiConAGUI:
         self.measure_var_list = []
 
         # Processing options
-        processing_frame = tb.Frame(selection_frame, height=600, width=400)
+        processing_frame = tb.Frame(selection_frame, height=600, width=500)
         processing_frame.grid(row=1, column=1, padx=5, pady=10, sticky=tk.NSEW)
         processing_frame.grid_propagate(False)
         
@@ -160,7 +160,7 @@ class HiConAGUI:
         self.imagej_button.grid(row=0, column=2, pady=30, sticky=tk.W)
 
         # Analysis Frames
-        analysis_frame = tb.Frame(selection_frame, height=600, width=200)
+        analysis_frame = tb.Frame(selection_frame, height=600, width=450)
         analysis_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NSEW)
         analysis_frame.grid_propagate(False)
 
@@ -183,6 +183,8 @@ class HiConAGUI:
         self.cellpose_batchsize_int = tk.IntVar()
         self.cellpose_process_choice_text = tk.StringVar()
 
+        self.advanced_order_text = tk.StringVar()
+
         self._set_default_cellpose()
 
         self.analysis_options = {"cellpose": self.cellpose_state,
@@ -195,6 +197,12 @@ class HiConAGUI:
         self.cellpose_check = tb.Checkbutton(analysis_frame, text = "Cellpose",
                                          variable=self.cellpose_state, command=lambda: self._show_cellpose_settings(True))
         self.cellpose_check.grid(row=1, column=0, pady=5, sticky=tk.W)
+
+        tb.Label(analysis_frame, text="Apply analysis on").grid(row=2, column=0, pady=20, sticky=tk.W)
+        self.advanced_order_combo = tb.Combobox(analysis_frame, textvariable=self.advanced_order_text, width=18, 
+                                      state='readonly', values=["stitched image", "each FOV", "all available images"])
+        self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
+        self.advanced_order_combo.current(0)
 
         # Confirm button
         self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
@@ -342,7 +350,8 @@ class HiConAGUI:
                                  'stitch_ref_ch': self.stitching_ch_int.get(),
                                  'imagej_loc': self.imagej_entry_text.get(),
                                  'cellpose': self.cellpose_state.get(),
-                                 'imagej': self.imagej_state.get()}
+                                 'imagej': self.imagej_state.get(),
+                                 'advanced_process_order': self.advanced_order_text.get()}
         return processing_selection
 
     def _validate(self, button):
@@ -560,7 +569,7 @@ class HiConAGUI:
 
 if __name__ == "__main__":
     root = tb.Window(themename="lumen", title="HiConA")
-    root.geometry("1400x950")
+    root.geometry("1600x950")
     root.bind_all("<MouseWheel>")
     HiConA = HiConAGUI(root)
     root.mainloop()
