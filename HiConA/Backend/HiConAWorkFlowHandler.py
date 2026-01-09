@@ -40,7 +40,7 @@ class HiConAWorkflowHandler:
         """Process a single well, including optional stitching and advanced processing."""
         well_output_dir = create_directory(os.path.join(self.output_dir, cur_well))
 
-        if self.run_preprocess():
+        if self.run_preprocess:
             self._run_preprocessing_pipeline(cur_well, well_output_dir)
 
         if self.processes_to_run.get("stitching", 0):
@@ -76,7 +76,7 @@ class HiConAWorkflowHandler:
             print(np.shape(final_image), "final image shape")
 
             # How do we handle multiple timepoints?
-            if self.processes_to_run("stitching", 0) or self.processes_to_run.get("sep_ch", 1):
+            if self.processes_to_run.get("stitching", 0) or self.processes_to_run.get("sep_ch", 0):
                     self._save_split_ch_images(final_image, fov, cur_well, well_output_dir)
 
             save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
@@ -84,19 +84,21 @@ class HiConAWorkflowHandler:
 
     def _save_split_ch_images(self, image, fov, cur_well, well_output_dir):
         """Loop over channels to save each channel individually. To be used for stitching and for split channels."""
+        split_image = np.split(image, image.shape[-3], axis=-3) # Split along the channel dimension regardless of shape of image
         for ch in range(self.channels):
-                    ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
-                    split_image = image[ch,:,:]
-                    save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
-                    self._save_fov(save_split_name, split_image)
+            ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
+            save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
+            self._save_fov(save_split_name, split_image[ch])
 
     def _check_preprocess_selected(self):
         """Helper function to just determine if any preprossing will be performed"""
         if self.processes_to_run.get('8bit') == 1 or self.processes_to_run.get('sep_ch') == 1 or self.processes_to_run.get('proj') != "None" or self.processes_to_run.get("stitching") == 1:
             return True
+        else:
+            return False
     
     def _run_stitching_pipeline(self, well_output_dir):
-        """Loop over FOVs and timepoints, preprocess, apply optional advanced processing, and save."""
+        """Perform stitching on all FOV in preprocessed well."""
         stitching_dict = {"well_output_dir": well_output_dir,
                           "xml_reader":self.xml_reader}
         # How do we handle multiple timepoints?
@@ -122,18 +124,19 @@ class HiConAWorkflowHandler:
         processed_images = {}
 
         for image_path in image_paths_to_process:
-            image = np.array(tifffile.imread(image_path))[0]
+            image = np.array(tifffile.imread(image_path))
+            print(image_path)
+            print(np.shape(image))
             
             processed = self._apply_advanced_processes(image, image_path, process)
             processed_images[image_path] = processed
         
-        for image_path in processed_images.keys:
+        print(processed_images)
+        
+        for image_path, analysed_image in processed_images.items():
             image_name = os.path.basename(image_path).split(".")[0]
             save_name = os.path.join(save_dir, f"{image_name}_analysed.tiff")
-            self._save_fov(save_name, processed_images[image_path])
-
-    def _run_cellpose_pipeline(self, cur_well, well_output_dir):
-        pass
+            self._save_fov(save_name, analysed_image)
 
     def _apply_preprocess(self, images):
         """Normalize, project, or EDF the hyperstack before any further processing."""
@@ -174,7 +177,7 @@ class HiConAWorkflowHandler:
             axes += "T"
         if (self.planes > 1 and proj == "None"):
             axes += "Z"
-        if self.channels and not self.processes_to_run.get("stitching", 1):
+        if self.channels:# and not self.processes_to_run.get("stitching", 1):
             axes += "C"
         axes += "YX"
 
@@ -205,12 +208,13 @@ class HiConAWorkflowHandler:
         paths = self.files.get_opera_phenix_images_from_FOV(well_name, image_pattern)
         return load_images(paths)
 
-    def _save_fov(self, full_path, image):
+    def _save_fov(self, full_path, image, image_axes = None):
         pixel_size_um = self.xml_reader.get_pixel_scale()
+        axes = image_axes if image_axes != None else self.axes
         print(pixel_size_um)
         print(self.axes)
         """Saves the processed hyperstack to disk."""
-        save_images(full_path, image, pixel_size_um, self.axes)
+        save_images(full_path, image, pixel_size_um, axes)
         return full_path
 
 if __name__ == "__main__":

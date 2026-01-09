@@ -574,7 +574,7 @@ if __name__ == "__main__":
     HiConA = HiConAGUI(root)
     root.mainloop()
 
-    all_files, processes, output_dir = HiConA.get_input()
+    all_files, all_xml_readers, processes, output_dir = HiConA.get_input()
 
     print(all_files)
     print(processes)
