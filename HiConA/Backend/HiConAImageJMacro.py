@@ -9,8 +9,9 @@ from tkinter.filedialog import askdirectory
 import json
 
 class HiConAImageJProcessor:
-    def __init__(self, images):
+    def __init__(self, images, image_path):
         self.image_array = np.array(images)
+        self.org_image_path = image_path
         # Get this some other way?
         dimensions = np.shape(self.image_array)
 
@@ -21,8 +22,6 @@ class HiConAImageJProcessor:
         self.config_var = self._load_imagej_config()
 
         self.macro, self.arg, self.temp_dir = self._generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
-        print(self.macro)
-        print(self.arg)
         
 
     def _load_imagej_config(self):
@@ -91,7 +90,8 @@ class HiConAImageJProcessor:
 
         arg["preImagePath"] = pre_macro_temp
         arg["postImagePath"] = post_macro_temp
-        #arg_text = "#@ String preImagePath\n #@ String postImagePath\n"
+        arg["orgImagePath"] = self.org_image_path
+        #arg_text = "#@ String preImagePath\n #@ String postImagePath\n #@ String orgImagePath"
         """
         arg_text = ""
         for key in arg.keys():
@@ -106,7 +106,7 @@ class HiConAImageJProcessor:
         """
         
         #macro = arg_text + """open(preImagePath);\n""" + macro + """\nsaveAs("Tiff", postImagePath);"""
-        
+
         return macro, arg, temp_dir
 
     def process(self):

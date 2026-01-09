@@ -131,12 +131,11 @@ class HiConAWorkflowHandler:
             processed = self._apply_advanced_processes(image, image_path, process)
             processed_images[image_path] = processed
         
-        print(processed_images)
-        
-        for image_path, analysed_image in processed_images.items():
-            image_name = os.path.basename(image_path).split(".")[0]
-            save_name = os.path.join(save_dir, f"{image_name}_analysed.tiff")
-            self._save_fov(save_name, analysed_image)
+        if process != 'cellpose':
+            for image_path, analysed_image in processed_images.items():
+                image_name = os.path.basename(image_path).split(".")[0]
+                save_name = os.path.join(save_dir, f"{image_name}_analysed.tiff")
+                self._save_fov(save_name, analysed_image)
 
     def _apply_preprocess(self, images):
         """Normalize, project, or EDF the hyperstack before any further processing."""
@@ -150,12 +149,6 @@ class HiConAWorkflowHandler:
         )
         return processor.get_image()
 
-    def _apply_imagejprocess(self, image):
-        """Run user created ImageJ macro"""
-        imagej_processor = HiConAImageJProcessor(image)
-        imagej_processor.process()
-        return imagej_processor.get_image()
-
     def _apply_advanced_processes(self, hyperstack, image_path, process):
         """Run cellpose or ImageJ macro on selected image"""
         if process == "cellpose":
@@ -163,7 +156,7 @@ class HiConAWorkflowHandler:
             advanced_processor = HiConACellposeProcessor(hyperstack, image_path)
         elif process == "imagej":
             # Example placeholder: replace with your actual ImageJ processing
-            advanced_processor = HiConAImageJProcessor(hyperstack)
+            advanced_processor = HiConAImageJProcessor(hyperstack, image_path)
 
         advanced_processor.process()
         return advanced_processor.get_image()
