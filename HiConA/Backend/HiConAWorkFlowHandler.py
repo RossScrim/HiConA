@@ -203,10 +203,12 @@ class HiConAWorkflowHandler:
     def _save_fov(self, full_path, image, image_axes = None):
         pixel_size_um = self.xml_reader.get_pixel_scale()
         axes = image_axes if image_axes != None else self.axes
+        channels = self.xml_reader.get_channel_order()
         print(pixel_size_um)
         print(self.axes)
+        print(channels)
         """Saves the processed hyperstack to disk."""
-        save_images(full_path, image, pixel_size_um, axes)
+        save_images(full_path, image, pixel_size_um, axes, channels)
         return full_path
 
 if __name__ == "__main__":

@@ -1,1 +1,1 @@
-{"hyperstack": 0, "8bit": 0, "sep_ch": 0, "proj": "Maximum", "EDF_channel": 0, "stitching": 1, "stitch_ref_ch": 2, "imagej_loc": "C:/Users/ewestlund/Fiji", "cellpose": 0, "imagej": 1, "advanced_process_order": "stitched image"}
+{"hyperstack": 0, "8bit": 0, "sep_ch": 0, "proj": "Maximum", "EDF_channel": 0, "stitching": 0, "stitch_ref_ch": 2, "imagej_loc": "C:/Users/ewestlund/Fiji", "cellpose": 0, "imagej": 0, "advanced_process_order": "stitched image"}
