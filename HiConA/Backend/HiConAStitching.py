@@ -10,8 +10,8 @@ class HiConAStitching:
     def __init__(self, stitching_dir): # stitching_dir to include path to well to process, XML_reader
         self.saved_variables = self._load_variables()
         
-        imagej_loc = self.saved_variables["imagej_loc_entry"]
-        ref_ch = self.saved_variables["stitch_ref_ch_int"]
+        imagej_loc = self.saved_variables["imagej_loc"]
+        ref_ch = self.saved_variables["stitch_ref_ch"]
 
         well_path = stitching_dir["well_output_dir"]
         well_name = os.path.basename(os.path.normpath(well_path))
@@ -27,7 +27,7 @@ class HiConAStitching:
         self.ij = imagej.init(imagej_loc)  # Path to Fiji-folder
 
     def _load_variables(self):
-        saved_variables_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "saved_variables.json")
+        saved_variables_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "processing_variables.json")
         if os.path.isfile(saved_variables_f):
             with open(saved_variables_f, "r+") as f:
                 saved_var = json.load(f)

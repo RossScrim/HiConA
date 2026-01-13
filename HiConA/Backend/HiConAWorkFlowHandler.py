@@ -92,7 +92,8 @@ class HiConAWorkflowHandler:
 
     def _check_preprocess_selected(self):
         """Helper function to just determine if any preprossing will be performed"""
-        if self.processes_to_run.get('8bit') == 1 or self.processes_to_run.get('sep_ch') == 1 or self.processes_to_run.get('proj') != "None" or self.processes_to_run.get("stitching") == 1:
+        processes = [self.processes_to_run.get('hyperstack'), self.processes_to_run.get('8bit'), self.processes_to_run.get('sep_ch'), self.processes_to_run.get("stitching") == 1]
+        if any(p == 1 for p in processes) or self.processes_to_run.get('proj') != "None":
             return True
         else:
             return False
@@ -152,10 +153,8 @@ class HiConAWorkflowHandler:
     def _apply_advanced_processes(self, hyperstack, image_path, process):
         """Run cellpose or ImageJ macro on selected image"""
         if process == "cellpose":
-            # Example placeholder: replace with your actual Cellpose class
             advanced_processor = HiConACellposeProcessor(hyperstack, image_path)
         elif process == "imagej":
-            # Example placeholder: replace with your actual ImageJ processing
             advanced_processor = HiConAImageJProcessor(hyperstack, image_path)
 
         advanced_processor.process()

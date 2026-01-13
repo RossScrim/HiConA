@@ -94,7 +94,7 @@ class HiConAGUI:
         self.measure_var_list = []
 
         # Processing options
-        processing_frame = tb.Frame(selection_frame, height=600, width=500)
+        processing_frame = tb.Frame(selection_frame, height=600, width=400)
         processing_frame.grid(row=1, column=1, padx=5, pady=10, sticky=tk.NSEW)
         processing_frame.grid_propagate(False)
         
@@ -104,54 +104,58 @@ class HiConAGUI:
         #separator.grid(rowspan=10, column=2, ipadx=10, ipady=350, sticky=tk.E)
 
         # Processing options
+        self.hyperstack_state = tk.IntVar()
+        self.hyperstack_state.set(self._set_variable("hyperstack"))
         self.bit8_state = tk.IntVar()
+        self.bit8_state.set(self._set_variable("8bit"))
         self.sep_ch_state = tk.IntVar()
+        self.sep_ch_state.set(self._set_variable("sep_ch"))
         self.proj_text = tk.StringVar()
+        self.proj_text.set(self._set_variable("proj") if self._set_variable("proj") != "0"  else "None")
         self.edf_ch_int = tk.IntVar()
-        self.edf_ch_int.set(self._set_variable("EDF_channel_int"))
+        self.edf_ch_int.set(self._set_variable("EDF_channel"))
         self.stitching_state = tk.IntVar()
+        self.stitching_state.set(self._set_variable("stitching"))
         self.stitching_ch_int = tk.IntVar()
-        self.stitching_ch_int.set(self._set_variable("stitch_ref_ch_int"))
+        self.stitching_ch_int.set(self._set_variable("stitch_ref_ch"))
+        self.imagej_entry_text = tk.StringVar()
+        self.imagej_entry_text.set(self._set_variable("imagej_loc"))
 
-        self.processing_options = {"8bit": self.bit8_state,
-                                   "sep_ch": self.sep_ch_state,
-                                   "edf": self.proj_text,
-                                   "stitching": self.stitching_state}
+        self.hyperstack_check = tb.Checkbutton(processing_frame, text = "Create hyperstack",
+                                               variable=self.hyperstack_state)
+        self.hyperstack_check.grid(row=0, column=0, pady=5, sticky=tk.W)
 
         self.bit8_check = tb.Checkbutton(processing_frame, text = "Convert to 8-bit",
                                          variable=self.bit8_state)
-        self.bit8_check.grid(row=0, column=0, pady=5, sticky=tk.W)
+        self.bit8_check.grid(row=1, column=0, pady=5, sticky=tk.W)
 
         self.sep_ch_check = tb.Checkbutton(processing_frame, text="Separate channels          ",
                                            variable=self.sep_ch_state)
-        self.sep_ch_check.grid(row=1, column=0, pady=5, sticky=tk.W)
+        self.sep_ch_check.grid(row=2, column=0, pady=5, sticky=tk.W)
 
-        tb.Label(processing_frame, text="Extended Depth of Focus").grid(row=2, column=0, pady=20, sticky=tk.W)
+        tb.Label(processing_frame, text="Extended Depth of Focus").grid(row=3, column=0, pady=20, sticky=tk.W)
         self.proj_combo = tb.Combobox(processing_frame, textvariable=self.proj_text, width=12, 
                                       state='readonly', values=["None", "Maximum", "Minimum", "ImageJ EDF"])
-        self.proj_combo.grid(row=2, column=1, pady=15, sticky=tk.W)
-        self.proj_combo.current(0)
+        self.proj_combo.grid(row=3, column=1, pady=15, sticky=tk.W)
         self.proj_combo.bind("<<ComboboxSelected>>", self._show_hidden_frame_bind)
 
         self.edf_frame = tb.Frame(processing_frame)
         tb.Label(self.edf_frame, text="Channel for ImageJ EDF").grid(row=0, column=0, pady=5, sticky=tk.W)
-        self.edfproj_entry = tb.Entry(self.edf_frame, text=self.edf_ch_int, width=2, background="White", validate='focus', 
+        self.edfproj_entry = tb.Entry(self.edf_frame, text=self.edf_ch_int, width=2, background="White", validate='key', 
                                       validatecommand=(self.master.register(self._validate_int), '%P')).grid(row=0, column=1, padx=38, sticky=tk.W)
 
         
         self.stitching_check = tb.Checkbutton(processing_frame, text = "Stitching",
                                          variable=self.stitching_state, command=lambda: self._show_hidden_frame_bind(True))
-        self.stitching_check.grid(row=4, column=0, pady=10, sticky=tk.W)
+        self.stitching_check.grid(row=5, column=0, pady=10, sticky=tk.W)
 
         self.stitching_frame = tb.Frame(processing_frame)
         tb.Label(self.stitching_frame, text="Channel for Stitching").grid(row=0, column=0, pady=5, sticky=tk.W)
-        self.stitching_entry = tb.Entry(self.stitching_frame, text=self.stitching_ch_int, width=2, background="White", validate='focus', 
+        self.stitching_entry = tb.Entry(self.stitching_frame, text=self.stitching_ch_int, width=2, background="White", validate='key', 
                                       validatecommand=(self.master.register(self._validate_int), '%P')).grid(row=0, column=1, padx=65, sticky=tk.W)
 
         self.imagej_frame = tb.Frame(processing_frame)
         tb.Label(self.imagej_frame, text="ImageJ.app Location").grid(row=0, column=0, pady=5, sticky=tk.W)
-        self.imagej_entry_text = tk.StringVar()
-        self.imagej_entry_text.set(self._set_variable("imagej_loc_entry"))
 
         self.imagej_entry = tb.Entry(self.imagej_frame, text=self.imagej_entry_text, width=13, state='readonly')
         self.imagej_entry.grid(row=0, column=1, padx=20, pady=30, sticky=tk.W)
@@ -166,24 +170,35 @@ class HiConAGUI:
 
         # Analysis Options
         self.imagej_state = tk.IntVar()
+        self.imagej_state.set(self._set_variable("imagej"))
         self.args_text = tk.StringVar()
-        self.args_text.set(self._set_variable("args_text"))
+        self.args_text.set(self._set_variable("args_file"))
         self.macro_text = tk.StringVar()
-        self.macro_text.set(self._set_variable("macro_text"))
-        self.imagej_interactive_state = tk.IntVar()  
+        self.macro_text.set(self._set_variable("macro_file"))
+        self.imagej_interactive_state = tk.IntVar()
+        self.imagej_interactive_state.set(self._set_variable("interactive"))
         self.imagej_showUI_state = tk.IntVar()
+        self.imagej_showUI_state.set(self._set_variable("show_UI"))
 
         self.cellpose_state = tk.IntVar()
+        self.cellpose_state.set(self._set_variable("cellpose"))
         self.cellpose_model_text = tk.StringVar()
+        self.cellpose_model_text.set(self._set_variable("model"))
         self.cellpose_diameter_double = tk.DoubleVar()
+        self.cellpose_diameter_double.set(self._set_variable("diameter"))
         self.cellpose_channel_int = tk.IntVar()
+        self.cellpose_channel_int.set(self._set_variable("channel"))
         self.cellpose_flow_threshold_double = tk.DoubleVar()
+        self.cellpose_flow_threshold_double.set(self._set_variable("flow_threshold"))
         self.cellpose_cellprob_threshold_double = tk.DoubleVar()
+        self.cellpose_cellprob_threshold_double.set(self._set_variable("cellprob_threshold"))
         self.cellpose_niter_int = tk.IntVar()
+        self.cellpose_niter_int.set(self._set_variable("niter"))
         self.cellpose_batchsize_int = tk.IntVar()
-        self.cellpose_process_choice_text = tk.StringVar()
+        self.cellpose_batchsize_int.set(self._set_variable("batch_size"))
 
         self.advanced_order_text = tk.StringVar()
+        self.advanced_order_text.set(self._set_variable("advanced_process_order") if self._set_variable("advanced_process_order") != "0" else "stitched image")
 
         self._set_default_cellpose()
 
@@ -202,11 +217,12 @@ class HiConAGUI:
         self.advanced_order_combo = tb.Combobox(analysis_frame, textvariable=self.advanced_order_text, width=18, 
                                       state='readonly', values=["stitched image", "each FOV", "all available images"])
         self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
-        self.advanced_order_combo.current(0)
 
         # Confirm button
         self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
         self.confirm_button.grid(row=2, column=3, padx=0, pady=0, sticky=tk.E)
+
+        self._show_hidden_frame_bind(None)
 
 
     def _run_button(self):
@@ -233,8 +249,8 @@ class HiConAGUI:
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
         elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
             Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
-        elif (self.cellpose_process_choice_text.get() == "stitched image" and self.stitching_state.get() == 0):
-            Messagebox.show_info(message="If you want to run Cellpose on a Stitched image, please select Stitching in Processing", title="Correct selection")
+        elif (not self._check_options_selected()):
+            Messagebox.show_info(message="Please select a processing or analysis option", title="Missing Information")
         else:
             self._save_variables()
 
@@ -245,27 +261,53 @@ class HiConAGUI:
 
     def _load_variables(self):
         self.saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
-        print(self.saved_variables_f)
         if os.path.isfile(self.saved_variables_f):
             with open(self.saved_variables_f, "r+") as f:
                 self.saved_var = json.load(f)
-            
+                f.close()
+        else:
+            self.saved_var = {}
+
+        self.saved_processing_variables_f = os.path.join(os.path.join(os.path.dirname(__file__), "processing_variables.json"))
+        if os.path.isfile(self.saved_processing_variables_f):
+            with open(self.saved_processing_variables_f, "r+") as f:
+                self.saved_process_var = json.load(f)
+                f.close()
+        else:
+            self.saved_process_var = {}
+
+        self.saved_imagej_variables_f = os.path.join(os.path.join(os.path.dirname(__file__), "imagej_config.json"))
+        if os.path.isfile(self.saved_imagej_variables_f):
+            with open(self.saved_imagej_variables_f, "r+") as f:
+                self.saved_imagej_var = json.load(f)
+                f.close()
+        else:
+            self.saved_umagej_var = {}
+
+        self.saved_cellpose_variables_f = os.path.join(os.path.join(os.path.dirname(__file__), "cellpose_config.json"))
+        if os.path.isfile(self.saved_cellpose_variables_f):
+            with open(self.saved_cellpose_variables_f, "r+") as f:
+                self.saved_cellpose_var = json.load(f)
+                f.close()
+        else:
+            self.saved_cellpose_var = {}
+        
+        
     def _set_variable(self, variable_name):
+        variables = self.saved_var | self.saved_process_var | self.saved_imagej_var | self.saved_cellpose_var
         try:
-            return self.saved_var[variable_name]
+            return variables[variable_name]
         except:
-            return ""
+            return 0
         
     def _save_variables(self):
         # Save used variables using json for next run
         var_dict = {"src_entry_text": self.src_dir,
-                    'output_entry_text': self.output_dir,
-                    "EDF_channel_int": self.EDFchannel,
-                    "stitch_ref_ch_int": self.stitch_ref_ch,
-                    "imagej_loc_entry": self.imagej_loc}
+                    'output_entry_text': self.output_dir}
             
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
+            f.close()
 
     def _get_directory(self, button):
         """Asks users to choose the source and saving directories."""
@@ -342,16 +384,22 @@ class HiConAGUI:
         return  dict(zip(measurement_to_process, [self.files[j] for j in measurement_to_process])), dict(zip(measurement_to_process, [self.xml_readers[j] for j in measurement_to_process]))
 
     def _define_processing(self):
-        processing_selection = {'8bit': self.bit8_state.get(),
-                                 'sep_ch': self.sep_ch_state.get(),
-                                 'proj': self.proj_text.get(),
-                                 'EDF_channel': self.edf_ch_int.get(),
-                                 'stitching': self.stitching_state.get(),
-                                 'stitch_ref_ch': self.stitching_ch_int.get(),
-                                 'imagej_loc': self.imagej_entry_text.get(),
-                                 'cellpose': self.cellpose_state.get(),
-                                 'imagej': self.imagej_state.get(),
-                                 'advanced_process_order': self.advanced_order_text.get()}
+        processing_selection = {'hyperstack': self.hyperstack_state.get(),
+                                '8bit': self.bit8_state.get(),
+                                'sep_ch': self.sep_ch_state.get(),
+                                'proj': self.proj_text.get(),
+                                'EDF_channel': self.edf_ch_int.get(),
+                                'stitching': self.stitching_state.get(),
+                                'stitch_ref_ch': self.stitching_ch_int.get(),
+                                'imagej_loc': self.imagej_entry_text.get(),
+                                'cellpose': self.cellpose_state.get(),
+                                'imagej': self.imagej_state.get(),
+                                'advanced_process_order': self.advanced_order_text.get()}
+        
+        with open(self.saved_processing_variables_f, "w+") as f:
+            json.dump(processing_selection, f)
+            f.close()
+
         return processing_selection
 
     def _validate(self, button):
@@ -381,21 +429,21 @@ class HiConAGUI:
     def _show_hidden_frame_bind(self, e):
             showimageJ = [0,0]
             if self.proj_text.get() == "ImageJ EDF":
-                self.edf_frame.grid(row=3, columnspan=4, pady=10, sticky=tk.W)
+                self.edf_frame.grid(row=4, columnspan=4, pady=10, sticky=tk.W)
                 showimageJ[0] = 1
             else:
                 self.edf_frame.grid_forget()
                 showimageJ[0] = 0
             
             if self.stitching_state.get() == 1:
-                self.stitching_frame.grid(row=5, columnspan=4, pady=10, sticky=tk.W)
+                self.stitching_frame.grid(row=6, columnspan=4, pady=10, sticky=tk.W)
                 showimageJ[1] = 1
             else:
                 self.stitching_frame.grid_forget()
                 showimageJ[1] = 0
 
             if True in (t == 1 for t in showimageJ):
-                self.imagej_frame.grid(row=6, columnspan=4, pady=20, sticky=tk.W)
+                self.imagej_frame.grid(row=7, columnspan=4, pady=20, sticky=tk.W)
             else:
                 self.imagej_frame.grid_forget()
 
@@ -455,8 +503,9 @@ class HiConAGUI:
                          "interactive": self.imagej_interactive_state.get(),
                          "show_UI": self.imagej_showUI_state.get()}
         
-        with open(os.path.join(os.path.dirname(__file__), "imagej_config.json"), "w+") as f:
+        with open(self.saved_imagej_variables_f, "w+") as f:
             json.dump(imagej_config_dict, f)
+            f.close()
 
         window.destroy()
 
@@ -488,53 +537,46 @@ class HiConAGUI:
         model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=15, 
                                       state='readonly', values=["cyto3", "cyto2", "cyto", "nuclei"])
         model_combobox.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
-        model_combobox.current(0)
 
         diameter_label = tb.Label(cellpose_window, text="Diameter", font=("Segoe UI", 10))
         diameter_label.grid(row=3, column=0, pady=10, sticky=tk.E)
-        diameter_entry = tb.Entry(cellpose_window, text=self.cellpose_diameter_double, width=4, background="White", validate='focus', 
+        diameter_entry = tb.Entry(cellpose_window, text=self.cellpose_diameter_double, width=4, background="White", validate='key', 
                                       validatecommand=(self.master.register(self._validate_double), '%P'))
         diameter_entry.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
 
         channel_label = tb.Label(cellpose_window, text="Channel", font=("Segoe UI", 10))
         channel_label.grid(row=4, column=0, pady=10, sticky=tk.E)
-        channel_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_int, width=4, background="White", validate='focus',
+        channel_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_int, width=4, background="White", validate='key',
                                  validatecommand=(self.master.register(self._validate_int), '%P'))
         channel_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
 
         flow_treshold_label = tb.Label(cellpose_window, text="Flow threshold", font=("Segoe UI", 10))
         flow_treshold_label.grid(row=5, column=0, pady=10, sticky=tk.E)
-        flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='focus',
+        flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='key',
                                         validatecommand=(self.master.register(self._validate_double), '%P'))
         flow_threshold_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
         
         cellprob_treshold_label = tb.Label(cellpose_window, text="Cellprob threshold", font=("Segoe UI", 10))
         cellprob_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
-        cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='focus',
+        cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_double), '%P'))
         cellprob_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
 
         niter_label = tb.Label(cellpose_window, text="Niter", font=("Segoe UI", 10))
         niter_label.grid(row=7, column=0, pady=10, sticky=tk.E)
-        niter_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_niter_int, width=4, background="White", validate='focus',
+        niter_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_niter_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
         niter_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
 
         batchsize_label = tb.Label(cellpose_window, text="Batchsize", font=("Segoe UI", 10))
         batchsize_label.grid(row=8, column=0, pady=10, sticky=tk.E)
-        batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='focus',
+        batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
         batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
 
-        process_label = tb.Label(cellpose_window, text="Process", font=("Segoe UI", 10))
-        process_label.grid(row=9, column=0, pady=20, sticky=tk.E)
-        process_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_process_choice_text, width=15,
-                                    state='readonly', values=["stitched image", "each FOV"])
-        process_combobox.grid(row=9, column=1, padx=10, pady=20, sticky=tk.W)
-        process_combobox.current(0)
         
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
-        confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
+        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
 
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
@@ -543,24 +585,37 @@ class HiConAGUI:
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),
-                                'batch_size': self.cellpose_batchsize_int.get(),
-                                'process': self.cellpose_process_choice_text.get()}
+                                'batch_size': self.cellpose_batchsize_int.get()}
         
-        with open(os.path.join(os.path.dirname(__file__), "cellpose_config.json"), "w+") as f:
+        with open(self.saved_cellpose_variables_f, "w+") as f:
             json.dump(cellpose_config_dict, f)
+            f.close
 
         window.destroy()
 
-    def _validate_int(self,x): #TODO Check validation for Cellpose entries
-        if isinstance(x, int) and x != 0:
-            return True
+    def _check_options_selected(self):
+        options = [self.hyperstack_state.get(), self.bit8_state.get(), self.sep_ch_state.get(), self.stitching_state.get(), self.imagej_state.get(), self.cellpose_state.get()]
+        if all(v == 0 for v in options) and self.proj_text.get() == "None":
+            return 0
         else:
+            return 1
+
+    def _validate_int(self, x): 
+        if x == "":
+            return True
+        try:
+            value = int(x)
+            return value > 0
+        except ValueError:
             return False
         
-    def _validate_double(self,x):
-        if isinstance(x, (int, float)):
+    def _validate_double(self, x):
+        if x == "":
             return True
-        else:
+        try:
+            value = float(x)
+            return value >= 0
+        except ValueError:
             return False
 
     def get_input(self):

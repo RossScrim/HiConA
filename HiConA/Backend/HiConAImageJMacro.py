@@ -38,7 +38,7 @@ class HiConAImageJProcessor:
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
         post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
-        processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
+        processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
         
         for ch in range(self.num_channels):
             cur_image = self.image_array[ch, :, :]

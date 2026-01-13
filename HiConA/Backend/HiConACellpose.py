@@ -1,4 +1,5 @@
 import os
+os.environ['MPLBACKEND'] = 'Agg'
 import json
 import csv
 import time
@@ -7,6 +8,8 @@ from pathlib import Path
 from cellpose import models, io, utils
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import GPUtil
 import tifffile
 
@@ -23,7 +26,7 @@ class HiConACellposeProcessor:
         self.image_name = os.path.basename(os.path.normpath(self.image_path))
 
         self.well_path, self.measurement_path = self._get_well_path(image_path, r"r\d+c\d+$")
-
+        
         self.data_processing_file_path = self._generate_processing_data_file()
     
     def _load_cellpose_config(self):
