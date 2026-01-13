@@ -9,7 +9,7 @@ from GUI.GUI_HiConA import HiConAGUI
 
 def main():
     root = tb.Window(themename="lumen", title="HiConA")
-    root.geometry("1400x950")
+    root.geometry("1600x950")
     root.bind_all("<MouseWheel>")
     HiConA = HiConAGUI(root)
     root.mainloop()

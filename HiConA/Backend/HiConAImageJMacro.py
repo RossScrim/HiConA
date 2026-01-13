@@ -9,14 +9,15 @@ from tkinter.filedialog import askdirectory
 import json
 
 class HiConAImageJProcessor:
-    def __init__(self, images):
+    def __init__(self, images, image_path):
         self.image_array = np.array(images)
+        self.org_image_path = image_path
         # Get this some other way?
         dimensions = np.shape(self.image_array)
 
-        self.num_channels = dimensions[0]
-        self.image_x_dim = dimensions[1]
-        self.image_y_dim = dimensions[2]
+        self.num_channels = dimensions[-3]
+        self.image_y_dim = dimensions[-2]
+        self.image_x_dim = dimensions[-1]
 
         self.config_var = self._load_imagej_config()
 
@@ -24,7 +25,7 @@ class HiConAImageJProcessor:
         
 
     def _load_imagej_config(self):
-        imagej_config_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "imagej_macro_config.json")
+        imagej_config_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "imagej_config.json")
         if os.path.isfile(imagej_config_f):
             with open(imagej_config_f, "r+") as f:
                 imagej_config = json.load(f)
@@ -35,9 +36,9 @@ class HiConAImageJProcessor:
     def _imagej_run_macro(self):
         self._init_imagej()
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(self.temp_dir.name, "post.tif")
+        post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
-        processed_image = np.empty((self.num_channels, self.image_x_dim, self.image_y_dim))
+        processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
         
         for ch in range(self.num_channels):
             cur_image = self.image_array[ch, :, :]
@@ -75,7 +76,7 @@ class HiConAImageJProcessor:
                 self.ij.ui().showUI()
 
     
-    def _generate_macro(self, macro_file, args_file, cleanup_temp = 0):
+    def _generate_macro(self, macro_file, args_file):
         with open(macro_file, "r") as f:
             macro = f.read()
 
@@ -85,11 +86,13 @@ class HiConAImageJProcessor:
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
         pre_macro_temp = os.path.join(temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(temp_dir.name, "post.tif")
+        post_macro_temp = os.path.join(temp_dir.name, "post.tiff")
 
         arg["preImagePath"] = pre_macro_temp
         arg["postImagePath"] = post_macro_temp
-
+        arg["orgImagePath"] = self.org_image_path
+        #arg_text = "#@ String preImagePath\n #@ String postImagePath\n #@ String orgImagePath"
+        """
         arg_text = ""
         for key in arg.keys():
             arg_type = type(arg[key])
@@ -100,11 +103,9 @@ class HiConAImageJProcessor:
                 arg_text += "#@ int " + str(key) +"\n"
             elif arg_type == float:
                 arg_text += "#@ float " + str(key) +"\n"
+        """
         
-        macro = arg_text + """open(preImagePath);\n""" + macro + """\nsaveAs("Tiff", postImagePath);"""
-
-        if cleanup_temp:
-            temp_dir.cleanup()
+        #macro = arg_text + """open(preImagePath);\n""" + macro + """\nsaveAs("Tiff", postImagePath);"""
 
         return macro, arg, temp_dir
 

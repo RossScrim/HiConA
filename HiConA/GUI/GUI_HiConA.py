@@ -111,7 +111,7 @@ class HiConAGUI:
         self.sep_ch_state = tk.IntVar()
         self.sep_ch_state.set(self._set_variable("sep_ch"))
         self.proj_text = tk.StringVar()
-        self.proj_text.set(self._set_variable("proj"))
+        self.proj_text.set(self._set_variable("proj") if self._set_variable("proj") != "0"  else "None")
         self.edf_ch_int = tk.IntVar()
         self.edf_ch_int.set(self._set_variable("EDF_channel"))
         self.stitching_state = tk.IntVar()
@@ -164,7 +164,7 @@ class HiConAGUI:
         self.imagej_button.grid(row=0, column=2, pady=30, sticky=tk.W)
 
         # Analysis Frames
-        analysis_frame = tb.Frame(selection_frame, height=600, width=200)
+        analysis_frame = tb.Frame(selection_frame, height=600, width=450)
         analysis_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NSEW)
         analysis_frame.grid_propagate(False)
 
@@ -196,8 +196,9 @@ class HiConAGUI:
         self.cellpose_niter_int.set(self._set_variable("niter"))
         self.cellpose_batchsize_int = tk.IntVar()
         self.cellpose_batchsize_int.set(self._set_variable("batch_size"))
-        self.cellpose_process_choice_text = tk.StringVar()
-        self.cellpose_process_choice_text.set(self._set_variable("process"))
+
+        self.advanced_order_text = tk.StringVar()
+        self.advanced_order_text.set(self._set_variable("advanced_process_order") if self._set_variable("advanced_process_order") != "0" else "stitched image")
 
         self._set_default_cellpose()
 
@@ -211,6 +212,11 @@ class HiConAGUI:
         self.cellpose_check = tb.Checkbutton(analysis_frame, text = "Cellpose",
                                          variable=self.cellpose_state, command=lambda: self._show_cellpose_settings(True))
         self.cellpose_check.grid(row=1, column=0, pady=5, sticky=tk.W)
+
+        tb.Label(analysis_frame, text="Apply analysis on").grid(row=2, column=0, pady=20, sticky=tk.W)
+        self.advanced_order_combo = tb.Combobox(analysis_frame, textvariable=self.advanced_order_text, width=18, 
+                                      state='readonly', values=["stitched image", "each FOV", "all available images"])
+        self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
 
         # Confirm button
         self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
@@ -387,7 +393,8 @@ class HiConAGUI:
                                 'stitch_ref_ch': self.stitching_ch_int.get(),
                                 'imagej_loc': self.imagej_entry_text.get(),
                                 'cellpose': self.cellpose_state.get(),
-                                'imagej': self.imagej_state.get()}
+                                'imagej': self.imagej_state.get(),
+                                'advanced_process_order': self.advanced_order_text.get()}
         
         with open(self.saved_processing_variables_f, "w+") as f:
             json.dump(processing_selection, f)
@@ -567,14 +574,9 @@ class HiConAGUI:
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
         batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
 
-        process_label = tb.Label(cellpose_window, text="Process", font=("Segoe UI", 10))
-        process_label.grid(row=9, column=0, pady=20, sticky=tk.E)
-        process_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_process_choice_text, width=15,
-                                    state='readonly', values=["stitched image", "each FOV"])
-        process_combobox.grid(row=9, column=1, padx=10, pady=20, sticky=tk.W)
         
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
-        confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
+        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
 
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
@@ -583,8 +585,7 @@ class HiConAGUI:
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),
-                                'batch_size': self.cellpose_batchsize_int.get(),
-                                'process': self.cellpose_process_choice_text.get()}
+                                'batch_size': self.cellpose_batchsize_int.get()}
         
         with open(self.saved_cellpose_variables_f, "w+") as f:
             json.dump(cellpose_config_dict, f)
@@ -623,7 +624,7 @@ class HiConAGUI:
 
 if __name__ == "__main__":
     root = tb.Window(themename="lumen", title="HiConA")
-    root.geometry("1400x950")
+    root.geometry("1600x950")
     root.bind_all("<MouseWheel>")
     HiConA = HiConAGUI(root)
     root.mainloop()
