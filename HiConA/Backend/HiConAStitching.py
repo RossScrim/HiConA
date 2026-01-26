@@ -19,7 +19,7 @@ class HiConAStitching:
         
         self._generate_TileConfiguration(xml_reader, well_path, well_name, ref_ch)
         self._initiate_imagej(imagej_loc)
-        self._stitch_well(well_path, well_name, ref_ch)
+        self._stitch_well(xml_reader, well_path, well_name, ref_ch)
 
     def _initiate_imagej(self, imagej_loc):
         plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
@@ -55,15 +55,17 @@ class HiConAStitching:
             for config in stitch_configuration_files:
                 copy(os.path.join(ref_ch_dir, config), os.path.join(ch_path, config))
 
-    def _stitch_first_image(self, orgDir, saveDir, wellName, chName):
+    def _stitch_first_image(self, orgDir, saveDir, wellName, chName, pixelScale):
     #In the macro, change where the bf.tiff is stored and where the processed_bf should be saved.
         macro = """
         //@ String orgDir
         //@ String saveDir
         //@ String wellName
         //@ String chName
+        //@ float scale
 
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
+        run("Set Scale...", "distance=1 known="+scale+" unit=um");
         saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
         close("*");
         """
@@ -72,21 +74,23 @@ class HiConAStitching:
             'orgDir': orgDir,
             'saveDir': saveDir,
             'wellName': wellName,
-            'chName': chName
+            'chName': chName,
+            'scale': pixelScale
         }
 
         self.ij.py.run_macro(macro, args)
 
-    def _stitch_remaining_image(self, orgDir, saveDir, wellName, chName):
+    def _stitch_remaining_image(self, orgDir, saveDir, wellName, chName, pixelScale):
         #In the macro, change where the bf.tiff is stored and where the processed_bf should be saved.
         macro = """
         //@ String orgDir
         //@ String saveDir
         //@ String wellName
         //@ String chName
+        //@ float scale
 
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".registered.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
-
+        run("Set Scale...", "distance=1 known="+scale+" unit=um");
         saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
         close("*");
         """
@@ -95,22 +99,24 @@ class HiConAStitching:
             'orgDir': orgDir,
             'saveDir': saveDir,
             'wellName': wellName,
-            'chName': chName
+            'chName': chName,
+            'scale': pixelScale
         }
 
         self.ij.py.run_macro(macro, args)
 
     
-    def _mergeImages(self, orgDir, wellName):
+    def _mergeImages(self, orgDir, wellName, pixelScale):
         macro = """
         //@ String orgDir
         //@ String wellName
+        //@ float scale
     
         File.openSequence(orgDir, " open");
         run("Images to Stack", "method=[Scale (smallest)] name="+wellName);
 
         run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
-
+        run("Set Scale...", "distance=1 known="+scale+" unit=um");
         saveAs("Tiff", orgDir+File.separator+wellName+".tiff");
 
         close("*");
@@ -118,29 +124,32 @@ class HiConAStitching:
 
         args = {
             'orgDir': orgDir,
-            'wellName': wellName
+            'wellName': wellName,
+            'scale': pixelScale
         }
 
         self.ij.py.run_macro(macro, args)
     
-    def _stitch_well(self, well_path, well_name, ref_ch):
+    def _stitch_well(self, xml_reader, well_path, well_name, ref_ch):
         stitched_path = os.path.join(well_path, "Stitched")
         self._create_dir(stitched_path)
+
+        pixelScale = xml_reader.get_pixel_scale()
 
         ch_directories = [d for d in os.listdir(well_path) if os.path.isdir(os.path.join(well_path, d)) and d.startswith("ch") and d != "ch"+str(ref_ch)]
         ref_ch_dir = os.path.join(well_path, "ch"+str(ref_ch))
 
-        self._stitch_first_image(ref_ch_dir, stitched_path, well_name, "ch"+str(ref_ch))
+        self._stitch_first_image(ref_ch_dir, stitched_path, well_name, "ch"+str(ref_ch), pixelScale)
 
         self._copy_tile_configure_files(ref_ch_dir, well_path, ch_directories)
 
         for ch_dir in ch_directories:
             ch_path = os.path.join(well_path, ch_dir)
 
-            self._stitch_remaining_image(ch_path, stitched_path, well_name, ch_dir)
+            self._stitch_remaining_image(ch_path, stitched_path, well_name, ch_dir, pixelScale)
 
         if len(ch_directories) != 0:
-            self._mergeImages(stitched_path, well_name)
+            self._mergeImages(stitched_path, well_name, pixelScale)
     
         self.ij.dispose()
 

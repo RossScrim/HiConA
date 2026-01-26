@@ -4,6 +4,7 @@ import imagej
 import scyjava
 import tempfile
 import re
+from pathlib import Path
 import os
 from tkinter.filedialog import askdirectory
 import json
@@ -11,7 +12,9 @@ import json
 class HiConAImageJProcessor:
     def __init__(self, images, image_path):
         self.image_array = np.array(images)
-        self.org_image_path = image_path
+        self.image_path = image_path
+        self.well_path, self.measurement_path = self._get_well_path(image_path, r"r\d+c\d+$")
+
         # Get this some other way?
         dimensions = np.shape(self.image_array)
 
@@ -32,14 +35,30 @@ class HiConAImageJProcessor:
                 return imagej_config
         else:
             return None
+        
+    def _get_well_path(self, image_path, pattern):
+        current = Path(image_path).resolve()
+        compiled_pattern = re.compile(pattern)
+
+        for parent in [current] + list(current.parents):
+            if compiled_pattern.match(parent.name):
+                return parent, parent.parent
+            
+        return None
 
     def _imagej_run_macro(self):
         self._init_imagej()
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
         post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
-        processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
+        #processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
         
+        tifffile.imwrite(pre_macro_temp, self.image_array, imagej=True, metadata={'axes':'CYX'})
+
+        self.ij.py.run_macro(self.macro, self.arg)
+
+        processed_image = tifffile.imread(post_macro_temp)
+        """
         for ch in range(self.num_channels):
             cur_image = self.image_array[ch, :, :]
             tifffile.imwrite(pre_macro_temp, cur_image, imagej=True, metadata={'axes':'YX'})
@@ -50,7 +69,7 @@ class HiConAImageJProcessor:
             temp_im_array.append(tifffile.imread(post_macro_temp))
             temp_im_array = np.array(temp_im_array)
 
-            processed_image[ch] = temp_im_array
+            processed_image[ch] = temp_im_array"""
             
         necessary_type = np.uint16
         min_value = np.iinfo(necessary_type).min # 0
@@ -90,7 +109,8 @@ class HiConAImageJProcessor:
 
         arg["preImagePath"] = pre_macro_temp
         arg["postImagePath"] = post_macro_temp
-        arg["orgImagePath"] = self.org_image_path
+        arg["imagePath"] = self.image_path
+        arg["wellPath"] = self.well_path
         #arg_text = "#@ String preImagePath\n #@ String postImagePath\n #@ String orgImagePath"
         """
         arg_text = ""

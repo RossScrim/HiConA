@@ -81,7 +81,7 @@ class HiConACellposeProcessor:
             masks, flows, styles, diams = model.eval(
                 self.image,
                 diameter = self.cellpose_config['diameter'],
-                channels = [self.seg_ch, 0], #currently only uses one channel, https://cellpose.readthedocs.io/en/v3.1.1.1/settings.html
+                channels = self.seg_ch,
                 flow_threshold = self.cellpose_config['flow_threshold'],
                 cellprob_threshold = self.cellpose_config['cellprob_threshold'],
                 niter = self.cellpose_config['niter'],

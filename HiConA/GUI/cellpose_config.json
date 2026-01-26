@@ -1,1 +1,1 @@
-{"model": "cyto3", "diameter": 0.0, "channel": 1, "flow_threshold": 0.4, "cellprob_threshold": 0.0, "niter": 0, "batch_size": 64, "process": "stitched image"}
+{"model": "cyto3", "diameter": 0.0, "channel": [2, 0], "flow_threshold": 0.4, "cellprob_threshold": 0.0, "niter": 0, "batch_size": 64}

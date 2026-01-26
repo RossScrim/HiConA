@@ -186,8 +186,10 @@ class HiConAGUI:
         self.cellpose_model_text.set(self._set_variable("model"))
         self.cellpose_diameter_double = tk.DoubleVar()
         self.cellpose_diameter_double.set(self._set_variable("diameter"))
-        self.cellpose_channel_int = tk.IntVar()
-        self.cellpose_channel_int.set(self._set_variable("channel"))
+        self.cellpose_channel_1_int = tk.IntVar()
+        self.cellpose_channel_1_int.set(self._set_variable("channel")[0])
+        self.cellpose_channel_2_int = tk.IntVar()
+        self.cellpose_channel_2_int.set(self._set_variable("channel")[1])
         self.cellpose_flow_threshold_double = tk.DoubleVar()
         self.cellpose_flow_threshold_double.set(self._set_variable("flow_threshold"))
         self.cellpose_cellprob_threshold_double = tk.DoubleVar()
@@ -512,7 +514,8 @@ class HiConAGUI:
     def _set_default_cellpose(self):
         self.cellpose_model_text.set('cyto3')
         self.cellpose_diameter_double.set(0)
-        self.cellpose_channel_int.set(0)
+        self.cellpose_channel_1_int.set(0)
+        self.cellpose_channel_2_int.set(0)
         self.cellpose_flow_threshold_double.set(0.4)
         self.cellpose_cellprob_threshold_double.set(0.0)
         self.cellpose_niter_int.set(0)
@@ -544,44 +547,50 @@ class HiConAGUI:
                                       validatecommand=(self.master.register(self._validate_double), '%P'))
         diameter_entry.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
 
-        channel_label = tb.Label(cellpose_window, text="Channel", font=("Segoe UI", 10))
-        channel_label.grid(row=4, column=0, pady=10, sticky=tk.E)
-        channel_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_int, width=4, background="White", validate='key',
+        channel_1_label = tb.Label(cellpose_window, text="Channel 1", font=("Segoe UI", 10))
+        channel_1_label.grid(row=4, column=0, pady=10, sticky=tk.E)
+        channel_1_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_1_int, width=4, background="White", validate='key',
                                  validatecommand=(self.master.register(self._validate_int), '%P'))
-        channel_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+        channel_1_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+        
+        channel_2_label = tb.Label(cellpose_window, text="Channel 2", font=("Segoe UI", 10))
+        channel_2_label.grid(row=5, column=0, pady=10, sticky=tk.E)
+        channel_2_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_2_int, width=4, background="White", validate='key',
+                                 validatecommand=(self.master.register(self._validate_int), '%P'))
+        channel_2_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
 
         flow_treshold_label = tb.Label(cellpose_window, text="Flow threshold", font=("Segoe UI", 10))
-        flow_treshold_label.grid(row=5, column=0, pady=10, sticky=tk.E)
+        flow_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
         flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='key',
                                         validatecommand=(self.master.register(self._validate_double), '%P'))
-        flow_threshold_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
+        flow_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
         
         cellprob_treshold_label = tb.Label(cellpose_window, text="Cellprob threshold", font=("Segoe UI", 10))
-        cellprob_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
+        cellprob_treshold_label.grid(row=7, column=0, pady=10, sticky=tk.E)
         cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_double), '%P'))
-        cellprob_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
+        cellprob_threshold_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
 
         niter_label = tb.Label(cellpose_window, text="Niter", font=("Segoe UI", 10))
-        niter_label.grid(row=7, column=0, pady=10, sticky=tk.E)
+        niter_label.grid(row=8, column=0, pady=10, sticky=tk.E)
         niter_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_niter_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
-        niter_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
+        niter_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
 
         batchsize_label = tb.Label(cellpose_window, text="Batchsize", font=("Segoe UI", 10))
-        batchsize_label.grid(row=8, column=0, pady=10, sticky=tk.E)
+        batchsize_label.grid(row=9, column=0, pady=10, sticky=tk.E)
         batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
-        batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
+        batchsize_entry.grid(row=9, column=1, padx=10, pady=10, sticky=tk.W)
 
         
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
-        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
+        confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
 
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
                                 'diameter': self.cellpose_diameter_double.get(),
-                                'channel': self.cellpose_channel_int.get(),
+                                'channel': [self.cellpose_channel_1_int.get(), self.cellpose_channel_2_int.get()],
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),
