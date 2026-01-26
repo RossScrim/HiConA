@@ -51,13 +51,31 @@ class HiConAImageJProcessor:
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
         post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
-        #processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
-        
         tifffile.imwrite(pre_macro_temp, self.image_array, imagej=True, metadata={'axes':'CYX'})
 
         self.ij.py.run_macro(self.macro, self.arg)
 
-        processed_image = tifffile.imread(post_macro_temp)
+        WindowManager = scyjava.jimport('ij.WindowManager')
+        output_image = WindowManager.getCurrentImage()
+
+        print(f"Output image type: {type(output_image)}")
+
+        if output_image is not None:
+            processed_image = self.ij.py.from_java(output_image)
+
+            if hasattr(processed_image, 'dims'):
+                print(f"Dimension names: {processed_image.dims}")
+                desired_order = [d for d in ['T', 'Z', 'C', 'Y', 'X'] if d in processed_image.dims]
+                processed_image = processed_image.transpose(*desired_order)
+                processed_image = processed_image.values
+
+            print(f"Array shape: {processed_image.shape}")
+
+            output_image.close()
+        else:
+            print(f"ERROR: No image found!")
+
+
         """
         for ch in range(self.num_channels):
             cur_image = self.image_array[ch, :, :]
@@ -139,16 +157,16 @@ class HiConAImageJProcessor:
     
 
 if __name__ == "__main__":
-    image_path = r"Z:\Emma\MMC poster\Processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05\Stitched\r04c05.tif"
+    image_path = r"Z:\Emma\Opera Phenix Test Data\max_stitch_cellpose_imagej\Test Data Opera Handler\r04c04\Stitched\r04c04.tiff"
     im_arr = np.array([tifffile.imread(image_path)])
 
-    imagejprocessor = HiConAImageJProcessor(im_arr[0])
+    imagejprocessor = HiConAImageJProcessor(im_arr[0], image_path)
 
     imagejprocessor.process()
 
     processed_image = imagejprocessor.get_image()
 
-    tifffile.imwrite(os.path.join(r"C:\Users\ewestlund\Documents\GitHub Projects\HiConA\HiConA\Test Data", "test_image.tif"), 
+    tifffile.imwrite(os.path.join(r"Z:\Emma\Opera Phenix Test Data\max_stitch_cellpose_imagej\Test Data Opera Handler\r04c04\imagej", "test_image.tiff"), 
                      processed_image,
                      imagej=True, 
                      metadata={'axes': 'CYX'})

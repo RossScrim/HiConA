@@ -45,9 +45,12 @@ class HiConAWorkflowHandler:
 
         if self.processes_to_run.get("stitching", 0):
             self._run_stitching_pipeline(well_output_dir)
+
+        if self.processes_to_run.get("cellpose", 0) == 1:
+            self._run_advanced_pipeline(cur_well, well_output_dir, "cellpose")
         
-        if self.processes_to_run.get("imagej", 0) == 1 or self.processes_to_run.get("cellpose", 0) == 1:
-            self._run_advanced_pipeline(cur_well, well_output_dir)
+        if self.processes_to_run.get("imagej", 0) == 1:
+            self._run_advanced_pipeline(cur_well, well_output_dir, "imagej")
         #if self.processes_to_run.get("imagej", 0):
         #    self._run_imagej_pipeline(cur_well, well_output_dir)
         #elif self.processes_to_run.get("cellpose", 0):
@@ -105,16 +108,14 @@ class HiConAWorkflowHandler:
         # How do we handle multiple timepoints?
         HiConAStitching(stitching_dict)
 
-    def _run_advanced_pipeline(self, cur_well, well_output_dir):
+    def _run_advanced_pipeline(self, cur_well, well_output_dir, process):
         """Process stitched image or all fovs with user chosen ImageJ macro."""
         #TODO Set up process for single fov and stitched image.
-        if self.processes_to_run.get("cellpose", 0) == 1:
+        if process == "cellpose":
             save_dir = create_directory(os.path.join(well_output_dir, "cellpose"))
-            process = "cellpose"
-        elif self.processes_to_run.get("imagej", 0) == 1:
+        elif process == "imagej":
             save_dir = create_directory(os.path.join(well_output_dir, "imagej"))
-            process = "imagej"
-
+            
         if self.processes_to_run.get("advanced_process_order") == "stitched image":
             image_paths_to_process = [os.path.join(well_output_dir, "Stitched", cur_well+".tiff")]
         elif self.processes_to_run.get("advanced_process_order") == "each FOV":

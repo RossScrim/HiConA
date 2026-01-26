@@ -249,8 +249,8 @@ class HiConAGUI:
             Messagebox.show_info(message="Please select a reference channel for the stitching process", title="Missing Information")
         elif (self.proj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
-        elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
-            Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
+        #elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
+        #    Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
         elif (not self._check_options_selected()):
             Messagebox.show_info(message="Please select a processing or analysis option", title="Missing Information")
         else:
