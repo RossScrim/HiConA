@@ -1,6 +1,7 @@
 import ttkbootstrap as tb
 
 from HiConA.Backend.HiConAWorkFlowHandler import HiConAWorkflowHandler
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
 from Utilities.ConfigReader import ConfigReader
 
 from GUI.GUI_HiConA import HiConAGUI
@@ -26,6 +27,7 @@ def main():
         print(processes)
         HiConAWorkflowHandler(all_xml_readers[measurement_id], all_files[measurement_id], processes, output_dir).run()
 
+    ImageJSingleton.dispose()
 
 if __name__ == '__main__':
     main()

@@ -9,6 +9,7 @@ import json
 from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
 
 class HiConAPreProcessor:
     def __init__(self, images, config):
@@ -52,10 +53,12 @@ class HiConAPreProcessor:
 
     def _imagej_EDF(self, EDF_channel_num):
         imagej_loc = self.saved_variables["imagej_loc_entry"]
-        plugins_dir = os.path.join(imagej_loc, "plugins")
-        scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        ij = imagej.init(imagej_loc, mode="interactive")
-        ij.ui().showUI()
+        ij = ImageJSingleton.get_instance(imagej_loc)
+        
+        #plugins_dir = os.path.join(imagej_loc, "plugins")
+        #scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
+        #ij = imagej.init(imagej_loc, mode="interactive")
+        #ij.ui().showUI()
 
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
@@ -90,7 +93,6 @@ class HiConAPreProcessor:
         array_clipped = np.clip(processed_image, min_value, max_value)
         self.image_array = array_clipped.astype(necessary_type)
 
-        ij.dispose()
         temp_dir.cleanup()
         return self
 

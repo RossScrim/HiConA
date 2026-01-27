@@ -9,6 +9,8 @@ import os
 from tkinter.filedialog import askdirectory
 import json
 
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
+
 class HiConAImageJProcessor:
     def __init__(self, images, image_path):
         self.image_array = np.array(images)
@@ -23,6 +25,9 @@ class HiConAImageJProcessor:
         self.image_x_dim = dimensions[-1]
 
         self.config_var = self._load_imagej_config()
+        self.ij = ImageJSingleton.get_instance(self.config_var["imagej_loc"])
+        if self.config_var["show_UI"] == 1:
+                self.ij.ui().showUI()
 
         self.macro, self.arg, self.temp_dir = self._generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
         
@@ -47,9 +52,7 @@ class HiConAImageJProcessor:
         return None
 
     def _imagej_run_macro(self):
-        self._init_imagej()
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
         tifffile.imwrite(pre_macro_temp, self.image_array, imagej=True, metadata={'axes':'CYX'})
 
@@ -72,46 +75,29 @@ class HiConAImageJProcessor:
             print(f"Array shape: {processed_image.shape}")
 
             output_image.close()
-        else:
-            print(f"ERROR: No image found!")
 
+            necessary_type = np.uint16
+            min_value = np.iinfo(necessary_type).min # 0
+            max_value = np.iinfo(necessary_type).max # 65535
+            array_clipped = np.clip(processed_image, min_value, max_value)
+            self.image_array = array_clipped.astype(necessary_type)
 
-        """
-        for ch in range(self.num_channels):
-            cur_image = self.image_array[ch, :, :]
-            tifffile.imwrite(pre_macro_temp, cur_image, imagej=True, metadata={'axes':'YX'})
-
-            self.ij.py.run_macro(self.macro, self.arg)
-
-            temp_im_array = []
-            temp_im_array.append(tifffile.imread(post_macro_temp))
-            temp_im_array = np.array(temp_im_array)
-
-            processed_image[ch] = temp_im_array"""
-            
-        necessary_type = np.uint16
-        min_value = np.iinfo(necessary_type).min # 0
-        max_value = np.iinfo(necessary_type).max # 65535
-        array_clipped = np.clip(processed_image, min_value, max_value)
-        self.image_array = array_clipped.astype(necessary_type)
-
-        self.ij.dispose()
         self.temp_dir.cleanup()
         return self
+
+            
     
-    def _init_imagej(self):
-        imagej_loc = self.config_var["imagej_loc"]
-
-        plugins_dir = os.path.join(imagej_loc, "plugins")
-        scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        if self.config_var["interactive"] == 1:
-            self.ij = imagej.init(imagej_loc, mode="interactive")
-        else:
-            self.ij = imagej.init(imagej_loc)
-        
-        if self.config_var["show_UI"] == 1:
-                self.ij.ui().showUI()
-
+    #def _init_imagej(self):
+    #    imagej_loc = self.config_var["imagej_loc"]
+    #    plugins_dir = os.path.join(imagej_loc, "plugins")
+    #    scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
+    #    if self.config_var["interactive"] == 1:
+    #        self.ij = imagej.init(imagej_loc, mode="interactive")
+    #    else:
+    #        self.ij = imagej.init(imagej_loc)
+    #    
+    #    if self.config_var["show_UI"] == 1:
+    #            self.ij.ui().showUI()
     
     def _generate_macro(self, macro_file, args_file):
         with open(macro_file, "r") as f:
@@ -123,28 +109,11 @@ class HiConAImageJProcessor:
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
         pre_macro_temp = os.path.join(temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(temp_dir.name, "post.tiff")
 
         arg["preImagePath"] = pre_macro_temp
-        arg["postImagePath"] = post_macro_temp
         arg["imagePath"] = self.image_path
         arg["wellPath"] = self.well_path
-        #arg_text = "#@ String preImagePath\n #@ String postImagePath\n #@ String orgImagePath"
-        """
-        arg_text = ""
-        for key in arg.keys():
-            arg_type = type(arg[key])
-
-            if arg_type == str:
-                arg_text += "#@ String " + str(key) +"\n" 
-            elif arg_type == int:
-                arg_text += "#@ int " + str(key) +"\n"
-            elif arg_type == float:
-                arg_text += "#@ float " + str(key) +"\n"
-        """
         
-        #macro = arg_text + """open(preImagePath);\n""" + macro + """\nsaveAs("Tiff", postImagePath);"""
-
         return macro, arg, temp_dir
 
     def process(self):

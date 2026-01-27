@@ -5,6 +5,7 @@ from shutil import copy
 import json
 
 from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
 
 class HiConAStitching:
     def __init__(self, stitching_dir): # stitching_dir to include path to well to process, XML_reader
@@ -12,19 +13,18 @@ class HiConAStitching:
         
         imagej_loc = self.saved_variables["imagej_loc"]
         ref_ch = self.saved_variables["stitch_ref_ch"]
-
         well_path = stitching_dir["well_output_dir"]
         well_name = os.path.basename(os.path.normpath(well_path))
         xml_reader = stitching_dir["xml_reader"]
         
         self._generate_TileConfiguration(xml_reader, well_path, well_name, ref_ch)
-        self._initiate_imagej(imagej_loc)
+        self.ij = ImageJSingleton.get_instance(imagej_loc)
         self._stitch_well(xml_reader, well_path, well_name, ref_ch)
 
-    def _initiate_imagej(self, imagej_loc):
-        plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
-        scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        self.ij = imagej.init(imagej_loc)  # Path to Fiji-folder
+    #def _initiate_imagej(self, imagej_loc):
+    #    plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
+    #    scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
+    #    self.ij = imagej.init(imagej_loc, mode="interactive")  # Path to Fiji-folder
 
     def _load_variables(self):
         saved_variables_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "processing_variables.json")
@@ -64,6 +64,8 @@ class HiConAStitching:
         //@ String chName
         //@ float scale
 
+        setBatchMode(true)
+
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
         run("Set Scale...", "distance=1 known="+scale+" unit=um");
         saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
@@ -89,6 +91,8 @@ class HiConAStitching:
         //@ String chName
         //@ float scale
 
+        setBatchMode(true)
+
         run("Grid/Collection stitching", "type=[Positions from file] order=[Defined by TileConfiguration] directory=["+orgDir+"] layout_file=TileConfiguration_"+wellName+".registered.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 subpixel_accuracy computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
         run("Set Scale...", "distance=1 known="+scale+" unit=um");
         saveAs("Tiff", saveDir+File.separator+wellName+"_"+chName+".tiff");
@@ -111,6 +115,8 @@ class HiConAStitching:
         //@ String orgDir
         //@ String wellName
         //@ float scale
+
+        setBatchMode(true)
     
         File.openSequence(orgDir, " open");
         run("Images to Stack", "method=[Scale (smallest)] name="+wellName);
@@ -150,8 +156,6 @@ class HiConAStitching:
 
         if len(ch_directories) != 0:
             self._mergeImages(stitched_path, well_name, pixelScale)
-    
-        self.ij.dispose()
 
 if __name__ == "__main__":
     well_path = r"Z:\Emma\MMC poster\Processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05"

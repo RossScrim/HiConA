@@ -187,9 +187,9 @@ class HiConAGUI:
         self.cellpose_diameter_double = tk.DoubleVar()
         self.cellpose_diameter_double.set(self._set_variable("diameter"))
         self.cellpose_channel_1_int = tk.IntVar()
-        self.cellpose_channel_1_int.set(self._set_variable("channel")[0])
+        self.cellpose_channel_1_int.set(self._set_variable("channel1"))
         self.cellpose_channel_2_int = tk.IntVar()
-        self.cellpose_channel_2_int.set(self._set_variable("channel")[1])
+        self.cellpose_channel_2_int.set(self._set_variable("channel2"))
         self.cellpose_flow_threshold_double = tk.DoubleVar()
         self.cellpose_flow_threshold_double.set(self._set_variable("flow_threshold"))
         self.cellpose_cellprob_threshold_double = tk.DoubleVar()
@@ -201,8 +201,6 @@ class HiConAGUI:
 
         self.advanced_order_text = tk.StringVar()
         self.advanced_order_text.set(self._set_variable("advanced_process_order") if self._set_variable("advanced_process_order") != "0" else "stitched image")
-
-        self._set_default_cellpose()
 
         self.analysis_options = {"cellpose": self.cellpose_state,
                                  "imagej": self.imagej_state}
@@ -590,7 +588,8 @@ class HiConAGUI:
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
                                 'diameter': self.cellpose_diameter_double.get(),
-                                'channel': [self.cellpose_channel_1_int.get(), self.cellpose_channel_2_int.get()],
+                                'channel1': self.cellpose_channel_1_int.get(),
+                                'channel2': self.cellpose_channel_2_int.get(),
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),

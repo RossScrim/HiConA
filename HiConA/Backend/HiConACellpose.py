@@ -18,7 +18,7 @@ from HiConA.Utilities.IOread import create_directory
 class HiConACellposeProcessor:
     def __init__(self, image, image_path):
         self.cellpose_config = self._load_cellpose_config()
-        self.seg_ch = self.cellpose_config["channel"]
+        self.seg_ch = [self.cellpose_config["channel1"], self.cellpose_config['channel2']]
         self.diameter_data = []
 
         self.image = image
