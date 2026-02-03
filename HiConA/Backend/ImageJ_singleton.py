@@ -12,10 +12,10 @@ class ImageJSingleton:
             plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
             scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
             cls._ij = imagej.init(imagej_loc, mode='interactive')
-            return cls._ij
+        return cls._ij
         
     @classmethod
-    def dipose(cls):
+    def dispose(cls):
         if cls._ij is not None:
             cls._ij.dispose()
             cls._ij = None
