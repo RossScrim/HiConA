@@ -4,14 +4,19 @@ import imagej
 import scyjava
 import tempfile
 import re
+from pathlib import Path
 import os
 from tkinter.filedialog import askdirectory
 import json
 
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
+
 class HiConAImageJProcessor:
     def __init__(self, images, image_path):
         self.image_array = np.array(images)
-        self.org_image_path = image_path
+        self.image_path = image_path
+        self.well_path, self.measurement_path = self._get_well_path(image_path, r"r\d+c\d+$")
+
         # Get this some other way?
         dimensions = np.shape(self.image_array)
 
@@ -20,6 +25,7 @@ class HiConAImageJProcessor:
         self.image_x_dim = dimensions[-1]
 
         self.config_var = self._load_imagej_config()
+        self.ij = ImageJSingleton.get_instance(self.config_var["imagej_loc"])
 
         self.macro, self.arg, self.temp_dir = self._generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
         
@@ -32,49 +38,50 @@ class HiConAImageJProcessor:
                 return imagej_config
         else:
             return None
+        
+    def _get_well_path(self, image_path, pattern):
+        current = Path(image_path).resolve()
+        compiled_pattern = re.compile(pattern)
+
+        for parent in [current] + list(current.parents):
+            if compiled_pattern.match(parent.name):
+                return parent, parent.parent
+            
+        return None
 
     def _imagej_run_macro(self):
-        self._init_imagej()
         pre_macro_temp = os.path.join(self.temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(self.temp_dir.name, "post.tiff")
 
-        processed_image = np.empty((self.num_channels, self.image_y_dim, self.image_x_dim))
-        
-        for ch in range(self.num_channels):
-            cur_image = self.image_array[ch, :, :]
-            tifffile.imwrite(pre_macro_temp, cur_image, imagej=True, metadata={'axes':'YX'})
+        tifffile.imwrite(pre_macro_temp, self.image_array, imagej=True, metadata={'axes':'CYX'})
 
-            self.ij.py.run_macro(self.macro, self.arg)
+        self.ij.py.run_macro(self.macro, self.arg)
 
-            temp_im_array = []
-            temp_im_array.append(tifffile.imread(post_macro_temp))
-            temp_im_array = np.array(temp_im_array)
+        WindowManager = scyjava.jimport('ij.WindowManager')
+        output_image = WindowManager.getCurrentImage()
 
-            processed_image[ch] = temp_im_array
-            
-        necessary_type = np.uint16
-        min_value = np.iinfo(necessary_type).min # 0
-        max_value = np.iinfo(necessary_type).max # 65535
-        array_clipped = np.clip(processed_image, min_value, max_value)
-        self.image_array = array_clipped.astype(necessary_type)
+        #print(f"Output image type: {type(output_image)}")
 
-        self.ij.dispose()
+        if output_image is not None:
+            processed_image = self.ij.py.from_java(output_image)
+
+            if hasattr(processed_image, 'dims'):
+                #print(f"Dimension names: {processed_image.dims}")
+                desired_order = [d for d in ['T', 'Z', 'C', 'Y', 'X'] if d in processed_image.dims]
+                processed_image = processed_image.transpose(*desired_order)
+                processed_image = processed_image.values
+
+            #print(f"Array shape: {processed_image.shape}")
+
+            output_image.close()
+
+            necessary_type = np.uint16
+            min_value = np.iinfo(necessary_type).min # 0
+            max_value = np.iinfo(necessary_type).max # 65535
+            array_clipped = np.clip(processed_image, min_value, max_value)
+            self.image_array = array_clipped.astype(necessary_type)
+
         self.temp_dir.cleanup()
         return self
-    
-    def _init_imagej(self):
-        imagej_loc = self.config_var["imagej_loc"]
-
-        plugins_dir = os.path.join(imagej_loc, "plugins")
-        scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        if self.config_var["interactive"] == 1:
-            self.ij = imagej.init(imagej_loc, mode="interactive")
-        else:
-            self.ij = imagej.init(imagej_loc)
-        
-        if self.config_var["show_UI"] == 1:
-                self.ij.ui().showUI()
-
     
     def _generate_macro(self, macro_file, args_file):
         with open(macro_file, "r") as f:
@@ -86,32 +93,19 @@ class HiConAImageJProcessor:
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
         pre_macro_temp = os.path.join(temp_dir.name, "pre.tiff")
-        post_macro_temp = os.path.join(temp_dir.name, "post.tiff")
 
         arg["preImagePath"] = pre_macro_temp
-        arg["postImagePath"] = post_macro_temp
-        arg["orgImagePath"] = self.org_image_path
-        #arg_text = "#@ String preImagePath\n #@ String postImagePath\n #@ String orgImagePath"
-        """
-        arg_text = ""
-        for key in arg.keys():
-            arg_type = type(arg[key])
-
-            if arg_type == str:
-                arg_text += "#@ String " + str(key) +"\n" 
-            elif arg_type == int:
-                arg_text += "#@ int " + str(key) +"\n"
-            elif arg_type == float:
-                arg_text += "#@ float " + str(key) +"\n"
-        """
+        arg["imagePath"] = self.image_path
+        arg["wellPath"] = self.well_path
         
-        #macro = arg_text + """open(preImagePath);\n""" + macro + """\nsaveAs("Tiff", postImagePath);"""
-
         return macro, arg, temp_dir
 
     def process(self):
         """Processes the image based on flags for specific operations."""
+        if self.config_var["show_UI"] == 1:
+            ImageJSingleton.show_ui(True)
         self._imagej_run_macro()
+        ImageJSingleton.show_ui(False)
         return self  # Return self to allow method chaining
     
     def get_image(self):
@@ -119,16 +113,16 @@ class HiConAImageJProcessor:
     
 
 if __name__ == "__main__":
-    image_path = r"Z:\Emma\MMC poster\Processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05\Stitched\r04c05.tif"
+    image_path = r"Z:\Emma\Opera Phenix Test Data\max_stitch_cellpose_imagej\Test Data Opera Handler\r04c04\Stitched\r04c04.tiff"
     im_arr = np.array([tifffile.imread(image_path)])
 
-    imagejprocessor = HiConAImageJProcessor(im_arr[0])
+    imagejprocessor = HiConAImageJProcessor(im_arr[0], image_path)
 
     imagejprocessor.process()
 
     processed_image = imagejprocessor.get_image()
 
-    tifffile.imwrite(os.path.join(r"C:\Users\ewestlund\Documents\GitHub Projects\HiConA\HiConA\Test Data", "test_image.tif"), 
+    tifffile.imwrite(os.path.join(r"Z:\Emma\Opera Phenix Test Data\max_stitch_cellpose_imagej\Test Data Opera Handler\r04c04\imagej", "test_image.tiff"), 
                      processed_image,
                      imagej=True, 
                      metadata={'axes': 'CYX'})

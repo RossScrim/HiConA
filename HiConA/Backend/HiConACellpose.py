@@ -18,7 +18,7 @@ from HiConA.Utilities.IOread import create_directory
 class HiConACellposeProcessor:
     def __init__(self, image, image_path):
         self.cellpose_config = self._load_cellpose_config()
-        self.seg_ch = self.cellpose_config["channel"]
+        self.seg_ch = [self.cellpose_config["channel1"], self.cellpose_config['channel2']]
         self.diameter_data = []
 
         self.image = image
@@ -81,7 +81,7 @@ class HiConACellposeProcessor:
             masks, flows, styles, diams = model.eval(
                 self.image,
                 diameter = self.cellpose_config['diameter'],
-                channels = [self.seg_ch, 0], #currently only uses one channel, https://cellpose.readthedocs.io/en/v3.1.1.1/settings.html
+                channels = self.seg_ch,
                 flow_threshold = self.cellpose_config['flow_threshold'],
                 cellprob_threshold = self.cellpose_config['cellprob_threshold'],
                 niter = self.cellpose_config['niter'],

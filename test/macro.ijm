@@ -1,6 +1,7 @@
 #@ String preImagePath
 #@ String postImagePath
-#@ String orgImagePath
+#@ String imagePath
+#@ String wellPath
 // Input own variables here
 #@ int sigmaVal
 #@ float satVal

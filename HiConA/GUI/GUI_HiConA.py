@@ -186,8 +186,10 @@ class HiConAGUI:
         self.cellpose_model_text.set(self._set_variable("model"))
         self.cellpose_diameter_double = tk.DoubleVar()
         self.cellpose_diameter_double.set(self._set_variable("diameter"))
-        self.cellpose_channel_int = tk.IntVar()
-        self.cellpose_channel_int.set(self._set_variable("channel"))
+        self.cellpose_channel_1_int = tk.IntVar()
+        self.cellpose_channel_1_int.set(self._set_variable("channel1"))
+        self.cellpose_channel_2_int = tk.IntVar()
+        self.cellpose_channel_2_int.set(self._set_variable("channel2"))
         self.cellpose_flow_threshold_double = tk.DoubleVar()
         self.cellpose_flow_threshold_double.set(self._set_variable("flow_threshold"))
         self.cellpose_cellprob_threshold_double = tk.DoubleVar()
@@ -199,8 +201,6 @@ class HiConAGUI:
 
         self.advanced_order_text = tk.StringVar()
         self.advanced_order_text.set(self._set_variable("advanced_process_order") if self._set_variable("advanced_process_order") != "0" else "stitched image")
-
-        self._set_default_cellpose()
 
         self.analysis_options = {"cellpose": self.cellpose_state,
                                  "imagej": self.imagej_state}
@@ -218,8 +218,11 @@ class HiConAGUI:
                                       state='readonly', values=["stitched image", "each FOV", "all available images"])
         self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
 
+        info_button = tb.Button(analysis_frame, text="Info", command=self._display_analysis_info, bootstyle="info")
+        info_button.grid(row=3, column=0, pady=50, sticky=tk.W)
+
         # Confirm button
-        self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
+        self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="success")
         self.confirm_button.grid(row=2, column=3, padx=0, pady=0, sticky=tk.E)
 
         self._show_hidden_frame_bind(None)
@@ -247,8 +250,8 @@ class HiConAGUI:
             Messagebox.show_info(message="Please select a reference channel for the stitching process", title="Missing Information")
         elif (self.proj_text.get() == "ImageJ EDF" or self.stitching_state.get() == 1) and self.imagej_entry_text.get() == "":
             Messagebox.show_info(message="Please select the location to ImageJ", title="Missing Information")
-        elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
-            Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
+        #elif (self.imagej_state.get() == 1 and self.cellpose_state.get() == 1):
+        #    Messagebox.show_info(message="Please only select one of ImageJ or Cellpose for analysis.", title="Invalid selection")
         elif (not self._check_options_selected()):
             Messagebox.show_info(message="Please select a processing or analysis option", title="Missing Information")
         else:
@@ -303,11 +306,18 @@ class HiConAGUI:
     def _save_variables(self):
         # Save used variables using json for next run
         var_dict = {"src_entry_text": self.src_dir,
-                    'output_entry_text': self.output_dir}
+                    'output_entry_text': self.output_dir,
+                    'imagej_loc': self.imagej_entry_text.get(),}
             
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
             f.close()
+
+    def _display_analysis_info(self):
+        Messagebox.show_info(message="For HiConA v1.3.0, the analysis is only available to be performed in the order \n" \
+        "1) Cellpose \n2) ImageJ \nif both options are selected at the same time." \
+        "\n\nAdditionally, ImageJ will always be initiated in Interactive Mode to ensure certain plugins are always available. Please tick Show UI if you wish to see the analysis and ImageJ tool bar during analysis, " \
+        "otherwise, as much as possible from ImageJ will be hidden from the user.", title="Analysis Workflow Order")
 
     def _get_directory(self, button):
         """Asks users to choose the source and saving directories."""
@@ -452,7 +462,7 @@ class HiConAGUI:
             return
         imagej_window = tb.Toplevel(self.master)
         imagej_window.title("Settings for ImageJ macro")
-        imagej_window.geometry("1210x380")
+        imagej_window.geometry("1210x350")
 
         imagej_window.transient(self.master)
 
@@ -485,22 +495,17 @@ class HiConAGUI:
         imagej_button = tb.Button(imagej_window, text="...", command=lambda: self._get_directory("imagej_button"), bootstyle="secondary")
         imagej_button.grid(row=2, column=2, padx=10, pady=10, sticky=tk.W)
 
-        interactive_check = tb.Checkbutton(imagej_window, text = "Interactive Mode",
-                                         variable=self.imagej_interactive_state)
-        interactive_check.grid(row=3, column=1, pady=10, sticky=tk.W)
-
         showIU_check = tb.Checkbutton(imagej_window, text="Show UI",
                                         variable=self.imagej_showUI_state)
-        showIU_check.grid(row=4, column=1, pady=10, sticky=tk.W)
+        showIU_check.grid(row=3, column=1, pady=10, sticky=tk.W)
 
         confirm_button = tb.Button(imagej_window, text="Confirm", command=lambda: self._imagej_confirm(imagej_window), bootstyle="info")
-        confirm_button.grid(row=5, column=3, padx=0, pady=0, sticky=tk.E)
+        confirm_button.grid(row=4, column=3, padx=0, pady=0, sticky=tk.E)
 
     def _imagej_confirm(self, window):
         imagej_config_dict = {"imagej_loc": self.imagej_entry_text.get(),
                          "macro_file": self.macro_text.get(),
                          "args_file": self.args_text.get(),
-                         "interactive": self.imagej_interactive_state.get(),
                          "show_UI": self.imagej_showUI_state.get()}
         
         with open(self.saved_imagej_variables_f, "w+") as f:
@@ -512,7 +517,8 @@ class HiConAGUI:
     def _set_default_cellpose(self):
         self.cellpose_model_text.set('cyto3')
         self.cellpose_diameter_double.set(0)
-        self.cellpose_channel_int.set(0)
+        self.cellpose_channel_1_int.set(0)
+        self.cellpose_channel_2_int.set(0)
         self.cellpose_flow_threshold_double.set(0.4)
         self.cellpose_cellprob_threshold_double.set(0.0)
         self.cellpose_niter_int.set(0)
@@ -544,44 +550,51 @@ class HiConAGUI:
                                       validatecommand=(self.master.register(self._validate_double), '%P'))
         diameter_entry.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
 
-        channel_label = tb.Label(cellpose_window, text="Channel", font=("Segoe UI", 10))
-        channel_label.grid(row=4, column=0, pady=10, sticky=tk.E)
-        channel_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_int, width=4, background="White", validate='key',
+        channel_1_label = tb.Label(cellpose_window, text="Channel 1", font=("Segoe UI", 10))
+        channel_1_label.grid(row=4, column=0, pady=10, sticky=tk.E)
+        channel_1_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_1_int, width=4, background="White", validate='key',
                                  validatecommand=(self.master.register(self._validate_int), '%P'))
-        channel_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+        channel_1_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
+        
+        channel_2_label = tb.Label(cellpose_window, text="Channel 2", font=("Segoe UI", 10))
+        channel_2_label.grid(row=5, column=0, pady=10, sticky=tk.E)
+        channel_2_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_2_int, width=4, background="White", validate='key',
+                                 validatecommand=(self.master.register(self._validate_int), '%P'))
+        channel_2_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
 
         flow_treshold_label = tb.Label(cellpose_window, text="Flow threshold", font=("Segoe UI", 10))
-        flow_treshold_label.grid(row=5, column=0, pady=10, sticky=tk.E)
+        flow_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
         flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='key',
                                         validatecommand=(self.master.register(self._validate_double), '%P'))
-        flow_threshold_entry.grid(row=5, column=1, padx=10, pady=10, sticky=tk.W)
+        flow_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
         
         cellprob_treshold_label = tb.Label(cellpose_window, text="Cellprob threshold", font=("Segoe UI", 10))
-        cellprob_treshold_label.grid(row=6, column=0, pady=10, sticky=tk.E)
+        cellprob_treshold_label.grid(row=7, column=0, pady=10, sticky=tk.E)
         cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_double), '%P'))
-        cellprob_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
+        cellprob_threshold_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
 
         niter_label = tb.Label(cellpose_window, text="Niter", font=("Segoe UI", 10))
-        niter_label.grid(row=7, column=0, pady=10, sticky=tk.E)
+        niter_label.grid(row=8, column=0, pady=10, sticky=tk.E)
         niter_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_niter_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
-        niter_entry.grid(row=7, column=1, padx=10, pady=10, sticky=tk.W)
+        niter_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
 
         batchsize_label = tb.Label(cellpose_window, text="Batchsize", font=("Segoe UI", 10))
-        batchsize_label.grid(row=8, column=0, pady=10, sticky=tk.E)
+        batchsize_label.grid(row=9, column=0, pady=10, sticky=tk.E)
         batchsize_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_batchsize_int, width=4, background="White", validate='key',
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
-        batchsize_entry.grid(row=8, column=1, padx=10, pady=10, sticky=tk.W)
+        batchsize_entry.grid(row=9, column=1, padx=10, pady=10, sticky=tk.W)
 
         
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
-        confirm_button.grid(row=9, column=2, pady=10, sticky=tk.E)
+        confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
 
     def _cellpose_confirm(self, window):
         cellpose_config_dict = {'model': self.cellpose_model_text.get(),
                                 'diameter': self.cellpose_diameter_double.get(),
-                                'channel': self.cellpose_channel_int.get(),
+                                'channel1': self.cellpose_channel_1_int.get(),
+                                'channel2': self.cellpose_channel_2_int.get(),
                                 'flow_threshold': self.cellpose_flow_threshold_double.get(),
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),

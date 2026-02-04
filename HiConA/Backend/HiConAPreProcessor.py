@@ -9,6 +9,7 @@ import json
 from HiConA.Utilities.Image_Utils import get_xy_axis_from_image
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
+from HiConA.Backend.ImageJ_singleton import ImageJSingleton
 
 class HiConAPreProcessor:
     def __init__(self, images, config):
@@ -51,11 +52,8 @@ class HiConAPreProcessor:
         return self
 
     def _imagej_EDF(self, EDF_channel_num):
-        imagej_loc = self.saved_variables["imagej_loc_entry"]
-        plugins_dir = os.path.join(imagej_loc, "plugins")
-        scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-        ij = imagej.init(imagej_loc, mode="interactive")
-        ij.ui().showUI()
+        imagej_loc = self.saved_variables["imagej_loc"]
+        ij = ImageJSingleton.get_instance(imagej_loc)
 
         # Generate tempfile
         temp_dir = tempfile.TemporaryDirectory()
@@ -74,6 +72,7 @@ class HiConAPreProcessor:
                 tifffile.imwrite(self.edf_temp, cur_image, imagej=True, metadata={'axes':'ZYX'}) #Change where the bf.tiff is saved.
 
                 ij.py.run_macro(macro, arg)
+                ImageJSingleton.show_ui(False)
 
                 edf_array = []
                 edf_array.append(tifffile.imread(self.proc_temp)) #Change where the processed_bf.tif is saved.
@@ -90,7 +89,6 @@ class HiConAPreProcessor:
         array_clipped = np.clip(processed_image, min_value, max_value)
         self.image_array = array_clipped.astype(necessary_type)
 
-        ij.dispose()
         temp_dir.cleanup()
         return self
 
@@ -99,6 +97,8 @@ class HiConAPreProcessor:
         macro = """
         @ String edfImagePath
         @ String procImagePath
+
+        setBatchMode(true)
 
         open(edfImagePath); 
         //print("image opened");
