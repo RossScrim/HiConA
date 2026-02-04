@@ -218,8 +218,11 @@ class HiConAGUI:
                                       state='readonly', values=["stitched image", "each FOV", "all available images"])
         self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
 
+        info_button = tb.Button(analysis_frame, text="Info", command=self._display_analysis_info, bootstyle="info")
+        info_button.grid(row=3, column=0, pady=50, sticky=tk.W)
+
         # Confirm button
-        self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="info")
+        self.confirm_button = tb.Button(selection_frame, text="Run", command=self._run_button, bootstyle="success")
         self.confirm_button.grid(row=2, column=3, padx=0, pady=0, sticky=tk.E)
 
         self._show_hidden_frame_bind(None)
@@ -303,11 +306,18 @@ class HiConAGUI:
     def _save_variables(self):
         # Save used variables using json for next run
         var_dict = {"src_entry_text": self.src_dir,
-                    'output_entry_text': self.output_dir}
+                    'output_entry_text': self.output_dir,
+                    'imagej_loc': self.imagej_entry_text.get(),}
             
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
             f.close()
+
+    def _display_analysis_info(self):
+        Messagebox.show_info(message="For HiConA v1.3.0, the analysis is only available to be performed in the order \n" \
+        "1) Cellpose \n2) ImageJ \nif both options are selected at the same time." \
+        "\n\nAdditionally, ImageJ will always be initiated in Interactive Mode to ensure certain plugins are always available. Please tick Show UI if you wish to see the analysis and ImageJ tool bar during analysis, " \
+        "otherwise, as much as possible from ImageJ will be hidden from the user.", title="Analysis Workflow Order")
 
     def _get_directory(self, button):
         """Asks users to choose the source and saving directories."""
@@ -452,7 +462,7 @@ class HiConAGUI:
             return
         imagej_window = tb.Toplevel(self.master)
         imagej_window.title("Settings for ImageJ macro")
-        imagej_window.geometry("1210x380")
+        imagej_window.geometry("1210x350")
 
         imagej_window.transient(self.master)
 
@@ -485,22 +495,17 @@ class HiConAGUI:
         imagej_button = tb.Button(imagej_window, text="...", command=lambda: self._get_directory("imagej_button"), bootstyle="secondary")
         imagej_button.grid(row=2, column=2, padx=10, pady=10, sticky=tk.W)
 
-        interactive_check = tb.Checkbutton(imagej_window, text = "Interactive Mode",
-                                         variable=self.imagej_interactive_state)
-        interactive_check.grid(row=3, column=1, pady=10, sticky=tk.W)
-
         showIU_check = tb.Checkbutton(imagej_window, text="Show UI",
                                         variable=self.imagej_showUI_state)
-        showIU_check.grid(row=4, column=1, pady=10, sticky=tk.W)
+        showIU_check.grid(row=3, column=1, pady=10, sticky=tk.W)
 
         confirm_button = tb.Button(imagej_window, text="Confirm", command=lambda: self._imagej_confirm(imagej_window), bootstyle="info")
-        confirm_button.grid(row=5, column=3, padx=0, pady=0, sticky=tk.E)
+        confirm_button.grid(row=4, column=3, padx=0, pady=0, sticky=tk.E)
 
     def _imagej_confirm(self, window):
         imagej_config_dict = {"imagej_loc": self.imagej_entry_text.get(),
                          "macro_file": self.macro_text.get(),
                          "args_file": self.args_text.get(),
-                         "interactive": self.imagej_interactive_state.get(),
                          "show_UI": self.imagej_showUI_state.get()}
         
         with open(self.saved_imagej_variables_f, "w+") as f:

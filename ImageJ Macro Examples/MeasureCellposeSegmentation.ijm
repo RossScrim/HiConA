@@ -4,7 +4,7 @@
 
 // Becuase of the ROIManager, this script needs to be run in Interactive Mode. Please tick "Interactive" when selecting the ImageJ Macro and Arguments file.
 // If you don't want to see the processes, enable batch mode 
-setBatchMode(true)
+//setBatchMode(true)
 
 open(preImagePath);
 imageID = getImageID();

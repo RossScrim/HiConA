@@ -3,7 +3,7 @@ import scyjava
 import os
 
 class ImageJSingleton:
-    _instance = None
+    #_instance = None
     _ij = None
 
     @classmethod
@@ -12,6 +12,7 @@ class ImageJSingleton:
             plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
             scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
             cls._ij = imagej.init(imagej_loc, mode='interactive')
+            cls.show_ui(False)
         return cls._ij
         
     @classmethod
@@ -19,3 +20,13 @@ class ImageJSingleton:
         if cls._ij is not None:
             cls._ij.dispose()
             cls._ij = None
+    
+    @classmethod
+    def show_ui(cls, state):
+        WindowManager = scyjava.jimport('ij.WindowManager')
+        non_image_titles = WindowManager.getNonImageTitles()
+
+        for title in non_image_titles:
+            window = WindowManager.getWindow(title)
+            if window:
+                window.setVisible(state)

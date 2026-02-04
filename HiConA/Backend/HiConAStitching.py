@@ -19,12 +19,8 @@ class HiConAStitching:
         
         self._generate_TileConfiguration(xml_reader, well_path, well_name, ref_ch)
         self.ij = ImageJSingleton.get_instance(imagej_loc)
-        self._stitch_well(xml_reader, well_path, well_name, ref_ch)
 
-    #def _initiate_imagej(self, imagej_loc):
-    #    plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
-    #    scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-    #    self.ij = imagej.init(imagej_loc, mode="interactive")  # Path to Fiji-folder
+        self._stitch_well(xml_reader, well_path, well_name, ref_ch)
 
     def _load_variables(self):
         saved_variables_f = os.path.join(os.path.dirname(__file__), '..', 'GUI', "processing_variables.json")

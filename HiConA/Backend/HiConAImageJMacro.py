@@ -26,8 +26,6 @@ class HiConAImageJProcessor:
 
         self.config_var = self._load_imagej_config()
         self.ij = ImageJSingleton.get_instance(self.config_var["imagej_loc"])
-        if self.config_var["show_UI"] == 1:
-                self.ij.ui().showUI()
 
         self.macro, self.arg, self.temp_dir = self._generate_macro(macro_file = self.config_var["macro_file"], args_file = self.config_var["args_file"])
         
@@ -61,18 +59,18 @@ class HiConAImageJProcessor:
         WindowManager = scyjava.jimport('ij.WindowManager')
         output_image = WindowManager.getCurrentImage()
 
-        print(f"Output image type: {type(output_image)}")
+        #print(f"Output image type: {type(output_image)}")
 
         if output_image is not None:
             processed_image = self.ij.py.from_java(output_image)
 
             if hasattr(processed_image, 'dims'):
-                print(f"Dimension names: {processed_image.dims}")
+                #print(f"Dimension names: {processed_image.dims}")
                 desired_order = [d for d in ['T', 'Z', 'C', 'Y', 'X'] if d in processed_image.dims]
                 processed_image = processed_image.transpose(*desired_order)
                 processed_image = processed_image.values
 
-            print(f"Array shape: {processed_image.shape}")
+            #print(f"Array shape: {processed_image.shape}")
 
             output_image.close()
 
@@ -84,20 +82,6 @@ class HiConAImageJProcessor:
 
         self.temp_dir.cleanup()
         return self
-
-            
-    
-    #def _init_imagej(self):
-    #    imagej_loc = self.config_var["imagej_loc"]
-    #    plugins_dir = os.path.join(imagej_loc, "plugins")
-    #    scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
-    #    if self.config_var["interactive"] == 1:
-    #        self.ij = imagej.init(imagej_loc, mode="interactive")
-    #    else:
-    #        self.ij = imagej.init(imagej_loc)
-    #    
-    #    if self.config_var["show_UI"] == 1:
-    #            self.ij.ui().showUI()
     
     def _generate_macro(self, macro_file, args_file):
         with open(macro_file, "r") as f:
@@ -118,7 +102,10 @@ class HiConAImageJProcessor:
 
     def process(self):
         """Processes the image based on flags for specific operations."""
+        if self.config_var["show_UI"] == 1:
+            ImageJSingleton.show_ui(True)
         self._imagej_run_macro()
+        ImageJSingleton.show_ui(False)
         return self  # Return self to allow method chaining
     
     def get_image(self):

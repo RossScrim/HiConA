@@ -51,10 +51,7 @@ class HiConAWorkflowHandler:
         
         if self.processes_to_run.get("imagej", 0) == 1:
             self._run_advanced_pipeline(cur_well, well_output_dir, "imagej")
-        #if self.processes_to_run.get("imagej", 0):
-        #    self._run_imagej_pipeline(cur_well, well_output_dir)
-        #elif self.processes_to_run.get("cellpose", 0):
-        #    self._run_cellpose_pipeline(cur_well, well_output_dir)
+
 
     def _run_preprocessing_pipeline(self, cur_well, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, and save."""
@@ -68,7 +65,7 @@ class HiConAWorkflowHandler:
                 preprocessed = self._apply_preprocess(images)
                 images_to_stack.append(preprocessed)
 
-            print(np.shape(images_to_stack))
+            #print(np.shape(images_to_stack))
             # Stack multiple timepoints into a single hyperstack if needed
             if len(images_to_stack) > 1:
                 final_image = np.stack(images_to_stack, axis=0)
@@ -76,7 +73,7 @@ class HiConAWorkflowHandler:
             else:
                 final_image = images_to_stack[0]
                 suffix = "hyperstack"
-            print(np.shape(final_image), "final image shape")
+            #print(np.shape(final_image), "final image shape")
 
             # How do we handle multiple timepoints?
             if self.processes_to_run.get("stitching", 0) or self.processes_to_run.get("sep_ch", 0):
@@ -127,8 +124,8 @@ class HiConAWorkflowHandler:
 
         for image_path in image_paths_to_process:
             image = np.array(tifffile.imread(image_path))
-            print(image_path)
-            print(np.shape(image))
+            #print(image_path)
+            #print(np.shape(image))
             
             processed = self._apply_advanced_processes(image, image_path, process)
             processed_images[image_path] = processed
@@ -142,7 +139,7 @@ class HiConAWorkflowHandler:
     def _apply_preprocess(self, images):
         """Normalize, project, or EDF the hyperstack before any further processing."""
         hyperstack = self._prepare_hyperstack(images)
-        print(np.shape(hyperstack))
+        #print(np.shape(hyperstack))
         processor = HiConAPreProcessor(hyperstack, self.config_file)
         processor.process(
             projection=self.processes_to_run.get("proj"),
@@ -205,9 +202,7 @@ class HiConAWorkflowHandler:
         pixel_size_um = self.xml_reader.get_pixel_scale()
         axes = image_axes if image_axes != None else self.axes
         channels = self.xml_reader.get_channel_order()
-        print(pixel_size_um)
-        print(self.axes)
-        print(channels)
+
         """Saves the processed hyperstack to disk."""
         save_images(full_path, image, pixel_size_um, axes, channels)
         return full_path
