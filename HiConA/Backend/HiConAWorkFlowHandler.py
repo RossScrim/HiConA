@@ -44,7 +44,7 @@ class HiConAWorkflowHandler:
             self._run_preprocessing_pipeline(cur_well, well_output_dir)
 
         if self.processes_to_run.get("stitching", 0):
-            self._run_stitching_pipeline(well_output_dir)
+            self._run_stitching_pipeline(cur_well, well_output_dir)
 
         if self.processes_to_run.get("cellpose", 0) == 1:
             self._run_advanced_pipeline(cur_well, well_output_dir, "cellpose")
@@ -92,18 +92,22 @@ class HiConAWorkflowHandler:
 
     def _check_preprocess_selected(self):
         """Helper function to just determine if any preprossing will be performed"""
-        processes = [self.processes_to_run.get('hyperstack'), self.processes_to_run.get('8bit'), self.processes_to_run.get('sep_ch'), self.processes_to_run.get("stitching") == 1]
+        processes = [self.processes_to_run.get('hyperstack'), self.processes_to_run.get('8bit'), self.processes_to_run.get('sep_ch')]#, self.processes_to_run.get("stitching") == 1]
         if any(p == 1 for p in processes) or self.processes_to_run.get('proj') != "None":
             return True
         else:
             return False
     
-    def _run_stitching_pipeline(self, well_output_dir):
+    def _run_stitching_pipeline(self, cur_well, well_output_dir):
         """Perform stitching on all FOV in preprocessed well."""
         stitching_dict = {"well_output_dir": well_output_dir,
                           "xml_reader":self.xml_reader}
         # How do we handle multiple timepoints?
-        HiConAStitching(stitching_dict)
+        stitching_processor = HiConAStitching(stitching_dict)
+        stitching_processor.process()
+        stitched_image = stitching_processor.getImage()
+        #print(np.shape(stitched_image))
+        self._save_fov(os.path.join(well_output_dir, "stitching", f"{cur_well}.tiff"), stitched_image, "CYX")
 
     def _run_advanced_pipeline(self, cur_well, well_output_dir, process):
         """Process stitched image or all fovs with user chosen ImageJ macro."""
@@ -114,11 +118,11 @@ class HiConAWorkflowHandler:
             save_dir = create_directory(os.path.join(well_output_dir, "imagej"))
             
         if self.processes_to_run.get("advanced_process_order") == "stitched image":
-            image_paths_to_process = [os.path.join(well_output_dir, "Stitched", cur_well+".tiff")]
+            image_paths_to_process = [os.path.join(well_output_dir, "stitching", cur_well+".tiff")]
         elif self.processes_to_run.get("advanced_process_order") == "each FOV":
             image_paths_to_process = [os.path.join(well_output_dir, im) for im in os.listdir(well_output_dir) if im.endswith(".tiff")]
         elif self.processes_to_run.get("advanced_process_order") == "all available images":
-            image_paths_to_process = [os.path.join(well_output_dir, "Stitched", cur_well+".tiff")] + [os.path.join(well_output_dir, im) for im in os.listdir(well_output_dir) if im.endswith(".tiff")]
+            image_paths_to_process = [os.path.join(well_output_dir, "stitching", cur_well+".tiff")] + [os.path.join(well_output_dir, im) for im in os.listdir(well_output_dir) if im.endswith(".tiff")]
         
         processed_images = {}
 
