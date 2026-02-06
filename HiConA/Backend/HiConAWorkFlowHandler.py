@@ -76,19 +76,26 @@ class HiConAWorkflowHandler:
             #print(np.shape(final_image), "final image shape")
 
             # How do we handle multiple timepoints?
-            if self.processes_to_run.get("stitching", 0) or self.processes_to_run.get("sep_ch", 0):
-                    self._save_split_ch_images(final_image, fov, cur_well, well_output_dir)
+            if self.processes_to_run.get("stitching", 0):
+                self._save_split_ch_images(final_image, fov, cur_well, well_output_dir)
+            elif self.processes_to_run.get("sep_ch", 0):
+                self._save_split_ch_images(final_image, fov, cur_well, well_output_dir, include_channel_names=True)
 
             save_name = os.path.join(well_output_dir, f"{cur_well}_f{str(fov).zfill(2)}_{suffix}.tiff")
             self._save_fov(save_name, final_image)
 
-    def _save_split_ch_images(self, image, fov, cur_well, well_output_dir):
+    def _save_split_ch_images(self, image, fov, cur_well, well_output_dir, include_channel_names=False):
         """Loop over channels to save each channel individually. To be used for stitching and for split channels."""
         split_image = np.split(image, image.shape[-3], axis=-3) # Split along the channel dimension regardless of shape of image
         for ch in range(self.channels):
-            ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
-            save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
-            self._save_fov(save_split_name, split_image[ch])
+            if not include_channel_names:
+                ch_dir = create_directory(os.path.join(well_output_dir, f"ch{ch+1}"))
+                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
+            else:
+                ch_dir = create_directory(os.path.join(well_output_dir, "split_channels", f"ch{str(ch+1).zfill(2)}"))
+                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}_ch{str(ch+1).zfill(2)}tiff")
+            channel_names = self.xml_reader.get_channel_order()
+            self._save_fov(save_split_name, split_image[ch], channel_name=channel_names[ch])
 
     def _check_preprocess_selected(self):
         """Helper function to just determine if any preprossing will be performed"""
@@ -202,11 +209,10 @@ class HiConAWorkflowHandler:
         paths = self.files.get_opera_phenix_images_from_FOV(well_name, image_pattern)
         return load_images(paths)
 
-    def _save_fov(self, full_path, image, image_axes = None):
+    def _save_fov(self, full_path, image, image_axes = None, channel_name = None):
         pixel_size_um = self.xml_reader.get_pixel_scale()
         axes = image_axes if image_axes != None else self.axes
-        channels = self.xml_reader.get_channel_order()
-
+        channels = channel_name if channel_name != None else self.xml_reader.get_channel_order()
         """Saves the processed hyperstack to disk."""
         save_images(full_path, image, pixel_size_um, axes, channels)
         return full_path

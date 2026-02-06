@@ -4,8 +4,7 @@ from HiConA.Backend.HiConAWorkFlowHandler import HiConAWorkflowHandler
 from HiConA.Backend.ImageJ_singleton import ImageJSingleton
 from Utilities.ConfigReader import ConfigReader
 
-from GUI.GUI_HiConA import HiConAGUI
-
+from HiConA.GUI.GUI_HiConA import HiConAGUI
 
 
 def main():

@@ -3,5 +3,7 @@
 __pycache__
 /TileConfigurations
 HiConA/GUI/saved_variables.json
+HiConA/GUI/processing_variables.json
+HiConA/GUI/imagej_config.json
 
 /HiConA/Test Data
