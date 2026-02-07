@@ -2,7 +2,7 @@ import ttkbootstrap as tb
 
 from HiConA.Backend.HiConAWorkFlowHandler import HiConAWorkflowHandler
 from HiConA.Backend.ImageJ_singleton import ImageJSingleton
-from Utilities.ConfigReader import ConfigReader
+from HiConA.Utilities.ConfigReader import ConfigReader
 
 from HiConA.GUI.GUI_HiConA import HiConAGUI
 
