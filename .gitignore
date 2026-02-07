@@ -1,9 +1,4 @@
 /HiConA.egg-info/
 /.venv/
 __pycache__
-/TileConfigurations
-HiConA/GUI/saved_variables.json
-HiConA/GUI/processing_variables.json
-HiConA/GUI/imagej_config.json
-
-/HiConA/Test Data
+HiConA/saved_variables.json

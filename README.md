@@ -122,9 +122,20 @@ deactivate
 rm -rf .venv        # macOS/Linux
 rd /s /q .venv      # Windows
 ```
+---
+
+## References
+
+B. Forster, D. Van De Ville, J. Berent, D. Sage, M. Unser, "Complex Wavelets for Extended Depth-of-Field: A New Method for the Fusion of Multichannel Microscopy Images," Microsc. Res. Tech., 65, September 2004.
+
+Hörl, D., Rojas Rusak, F., Preusser, F. et al. BigStitcher: reconstructing high-resolution image datasets of cleared and expanded samples. Nat Methods 16, 870–874 (2019).
+
+Stringer, C., Wang, T., Michaelos, M. et al. Cellpose: a generalist algorithm for cellular segmentation. Nat Methods 18, 100–106 (2021).
+
+Stirling DR, Swain-Bowden MJ, Lucas AM, Carpenter AE, Cimini BA, Goodman A (2021). CellProfiler 4: improvements in speed, utility and usability. BMC Bioinformatics, 22 (1), 433. . PMID: 34507520 PMCID: PMC8431850.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the CC-BY-SA 4.0 License. See the `LICENSE` file for details.
