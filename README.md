@@ -36,17 +36,17 @@ Designed for:
 
 ---
 
-# 🔬 Features
-## 🔍 Automated Detection
+#  Features
+## Automated Detection
 - Automatically detects archived Opera Phenix `hs` measurement directories.
 - Identifies valid imaging runs without manual navigation.
 
-## ⚙️ Batch Pre-processing
+## Batch Pre-processing
 - Apply configurable pipelines to multi-tile datasets.
 - Process large experiments through an intuitive GUI.
 - Designed for reproducibility and structured output.
 
-## 📁 Structured Output
+## Structured Output
 - Organized export directories.
 - Downstream-analysis-ready formats.
 - Consistent naming conventions for automation.
