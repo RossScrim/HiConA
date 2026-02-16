@@ -1,130 +1,215 @@
-# HiConA
+<p align="center">
+  <img src="https://raw.githubusercontent.com/RossScrim/HiConA/main/docs/logo.png" width="180" alt="HiConA Logo"/>
+</p>
 
-A Python package which integrates for preprocessing **Hi**gh-**Con**tent **A**nalysis (HiConA) of imaging data from the Opera Phenix with open-source image analysis packages in a GUI workflow. 
+<h1 align="center">HiConA</h1>
+
+<p align="center">
+  <b>Hi</b>gh-<b>Con</b>tent <b>A</b>nalysis Preprocessing Pipeline for Opera Phenix Imaging
+</p>
+
+<p align="center">
+  <a href="https://github.com/RossScrim/HiConA/releases">
+    <img src="https://img.shields.io/github/v/release/RossScrim/HiConA?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/RossScrim/HiConA/blob/main/License.txt">
+    <img src="https://img.shields.io/github/license/RossScrim/HiConA?style=for-the-badge" />
+  </a>
+  <img src="https://img.shields.io/badge/python-3.12-blue?style=for-the-badge&logo=python" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/GUI-enabled-success?style=for-the-badge" />
+</p>
 
 ---
 
-## 📦 Features
+## Overview
 
-- Launchable from the command line via `HiConA`
-- Detects all archived measurements from Opera Phenix "hs" directories
-- GUI which allows the user to select batch and pre-process steps to apply to Opera Phenix data
-- Integrates with `ImageJ` via the `OperaGUI_ImageJ` class
+**HiConA** is a Python package designed for preprocessing high-content imaging data acquired with the **Opera Phenix** system.
+
+It integrates leading open-source bioimage analysis tools into a unified, GUI-driven workflow for scalable, reproducible, and automated processing.
+
+Designed for:
+- High-throughput screening  
+- Multi-tile stitching workflows  
+- Z-stack fusion  
+- Automated segmentation pipelines  
 
 ---
 
-## 🧩 Project Structure
+#  Features
+## Automated Detection
+- Automatically detects archived Opera Phenix `hs` measurement directories.
+- Identifies valid imaging runs without manual navigation.
 
+## Batch Pre-processing
+- Apply configurable pipelines to multi-tile datasets.
+- Process large experiments through an intuitive GUI.
+- Designed for reproducibility and structured output.
+
+## Structured Output
+- Organized export directories.
+- Downstream-analysis-ready formats.
+- Consistent naming conventions for automation.
+
+---
+
+# 🔗 Integrated Tools
+
+<p align="center">
+  <img src="https://img.shields.io/badge/BigStitcher-Nature%20Methods-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/Cellpose-Deep%20Learning-green?style=flat-square" />
+  <img src="https://img.shields.io/badge/ImageJ-Fiji-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/EDF-Wavelet%20Fusion-purple?style=flat-square" />
+</p>
+
+### BigStitcher
+High-accuracy tile stitching for large microscopy datasets.  
+*Hörl et al., Nature Methods (2019)*
+
+###  Cellpose
+Deep learning-based generalist cell segmentation.  
+*Stringer et al., Nature Methods (2021)*
+
+### Extended Depth of Field (EDF)
+Wavelet-based z-stack fusion for multi-channel microscopy images.  
+*Forster et al., Microscopy Research and Technique (2004)*
+
+### ImageJ / Fiji Integration
+Execute custom `.ijm` macros directly inside the pipeline.
+
+---
+
+# Project Structure
+
+```bash
+.
+├── HiConA/
+│   ├── Backend/              # Processing logic
+│   ├── GUI/                  # Interface + JSON configs
+│   ├── Utilities/            # IO + config readers
+│   └── main.py               # Entry point
+├── ImageJ Macro Examples/
+├── test/
+├── LICENSE
+├── requirements.txt
+└── setup.py
 ```
-HiConA/
-├── setup.py                  # Installation script
-├── requirements.txt          # Python dependencies
-├── README.md                 # Documentation (this file)
-└── HiConA/   # Main package
-    ├── __init__.py
-    ├── main.py               # Entry point for CLI
-    ├── CellProfiler.py
-    ├── CellposeSegmentation.py
-    ├── ConfigReader.py
-    ├── FileManagement.py
-    ├── ImageJAfterStitching.py
-    ├── ImageProcessing.py
-    ├── StitchingImageJ.py
-    ├── arg.json
-    ├── imagej_config.json
-    ├── macro.ijm
-    ├── saved_variables.json
-    └── OperaGUI_ImageJ.py    # GUI interaction module
-	
 
-
-
-```
-
-> 🔸 Each folder containing `.py` files should include an `__init__.py` to be recognized as a package.
-
-
----
-## 🚀 Prerequisites
-
-**Python 3.9 is required** - please ensure you have installed python 3.9 before installation our packages. 
-you can follow the instrustions below on how to clone the repository and setup the package or download lastest release v1.1.0 and follow the instructions below under **Source Code Installation**
+> ⚠️ Every directory containing Python modules must include `__init__.py`.
 
 ---
 
-## 🛠️ Environment Setup
+# Requirements
 
-### 1. Clone the repository
+- **Python 3.12**
+- Windows or Linux
+- Opera Phenix imaging datasets
+
+---
+
+# Installation
+
+## 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/RossScrim/HiConA.git
 cd HiConA
 ```
 
-### 2. Create and activate a virtual environment (recommended)
+## 2️⃣ Create Virtual Environment
 
 ```bash
 python -m venv .venv
+```
 
-# On macOS/Linux:
+Activate:
+
+**macOS/Linux**
+```bash
 source .venv/bin/activate
+```
 
-# On Windows:
+**Windows**
+```bash
 .venv\Scripts\activate
 ```
 
-### 3. Install the package
-
-Install in **editable mode** so you can make changes without reinstalling:
+## 3️⃣ Install in Editable Mode
 
 ```bash
 pip install -e .
 ```
 
-This installs dependencies from `requirements.txt` and registers the CLI command `Opera_Processor`.
+This:
+- Installs dependencies
+- Registers CLI entry point
+- Enables development modifications without reinstalling
 
 ---
 
-## 🚀 Usage
+# ▶️ Usage
 
-Once installed, simply run:
+Run the application:
 
 ```bash
 HiConA.run
 ```
 
-This executes the `main()` function from:
+This executes:
 
-```
+```python
 HiConA/main.py
 ```
 
----
-
-✅ This ensures relative imports work properly.
-
-> ❌ Do **not** run it like `python main.py` — this may break imports.
+✅ Ensures correct relative imports  
+❌ Do NOT run `python main.py`
 
 ---
 
-## 🔄 Uninstall / Cleanup
+# Example Workflow
 
-To uninstall the package:
+1. Select Opera Phenix dataset
+2. Detect `hs` measurement folders
+3. Choose processing steps:
+   - Z projection method
+   - Stitching
+   - Segmentation
+4. Execute batch processing
+5. Export in a standardise structure
+
+---
+
+# Uninstall
 
 ```bash
-pip uninstall Opera_Processor
+pip uninstall HiConA
 ```
 
-To remove the virtual environment:
+Remove environment:
 
 ```bash
 deactivate
-rm -rf .venv        # macOS/Linux
-rd /s /q .venv      # Windows
+rm -rf .venv      # macOS/Linux
+rd /s /q .venv    # Windows
 ```
 
 ---
 
-## 📄 License
+# References
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+- Forster B. et al., *Complex Wavelets for Extended Depth-of-Field*, 2004  
+- Hörl D. et al., *BigStitcher*, Nature Methods (2019)  
+- Stringer C. et al., *Cellpose*, Nature Methods (2021)
+
+---
+
+# 📄 License
+
+Licensed under **CC-BY-SA 4.0**.  
+See `LICENSE` for full terms.
+
+---
+
+<p align="center">
+  Built for scalable microscopy workflows 🔬
+</p>
