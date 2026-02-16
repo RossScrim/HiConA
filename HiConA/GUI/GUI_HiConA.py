@@ -97,7 +97,7 @@ class HiConAGUI:
         processing_frame = tb.Frame(selection_frame, height=600, width=400)
         processing_frame.grid(row=1, column=1, padx=5, pady=10, sticky=tk.NSEW)
         processing_frame.grid_propagate(False)
-        
+
 
         separator = ttk.Separator(processing_frame, orient=tk.VERTICAL)
         separator.place(relx=1.0, rely=0, relheight=1.0, anchor=tk.NE)
@@ -121,7 +121,7 @@ class HiConAGUI:
         self.imagej_entry_text = tk.StringVar()
         self.imagej_entry_text.set(self._set_variable("imagej_loc"))
 
-        self.hyperstack_check = tb.Checkbutton(processing_frame, text = "Create hyperstack",
+        self.hyperstack_check = tb.Checkbutton(processing_frame, text = "Create Hyperstack",
                                                variable=self.hyperstack_state)
         self.hyperstack_check.grid(row=0, column=0, pady=5, sticky=tk.W)
 
@@ -129,29 +129,29 @@ class HiConAGUI:
                                          variable=self.bit8_state)
         self.bit8_check.grid(row=1, column=0, pady=5, sticky=tk.W)
 
-        self.sep_ch_check = tb.Checkbutton(processing_frame, text="Separate channels          ",
+        self.sep_ch_check = tb.Checkbutton(processing_frame, text="Separate Channels          ",
                                            variable=self.sep_ch_state)
         self.sep_ch_check.grid(row=2, column=0, pady=5, sticky=tk.W)
 
-        tb.Label(processing_frame, text="Extended Depth of Focus").grid(row=3, column=0, pady=20, sticky=tk.W)
-        self.proj_combo = tb.Combobox(processing_frame, textvariable=self.proj_text, width=12, 
+        tb.Label(processing_frame, text="Projection Method").grid(row=3, column=0, pady=20, sticky=tk.W)
+        self.proj_combo = tb.Combobox(processing_frame, textvariable=self.proj_text, width=12,
                                       state='readonly', values=["None", "Maximum", "Minimum", "ImageJ EDF"])
         self.proj_combo.grid(row=3, column=1, pady=15, sticky=tk.W)
         self.proj_combo.bind("<<ComboboxSelected>>", self._show_hidden_frame_bind)
 
         self.edf_frame = tb.Frame(processing_frame)
         tb.Label(self.edf_frame, text="Channel for ImageJ EDF").grid(row=0, column=0, pady=5, sticky=tk.W)
-        self.edfproj_entry = tb.Entry(self.edf_frame, text=self.edf_ch_int, width=2, background="White", validate='key', 
+        self.edfproj_entry = tb.Entry(self.edf_frame, text=self.edf_ch_int, width=2, background="White", validate='key',
                                       validatecommand=(self.master.register(self._validate_int), '%P')).grid(row=0, column=1, padx=38, sticky=tk.W)
 
-        
+
         self.stitching_check = tb.Checkbutton(processing_frame, text = "Stitching",
                                          variable=self.stitching_state, command=lambda: self._show_hidden_frame_bind(True))
         self.stitching_check.grid(row=5, column=0, pady=10, sticky=tk.W)
 
         self.stitching_frame = tb.Frame(processing_frame)
         tb.Label(self.stitching_frame, text="Channel for Stitching").grid(row=0, column=0, pady=5, sticky=tk.W)
-        self.stitching_entry = tb.Entry(self.stitching_frame, text=self.stitching_ch_int, width=2, background="White", validate='key', 
+        self.stitching_entry = tb.Entry(self.stitching_frame, text=self.stitching_ch_int, width=2, background="White", validate='key',
                                       validatecommand=(self.master.register(self._validate_int), '%P')).grid(row=0, column=1, padx=65, sticky=tk.W)
 
         self.imagej_frame = tb.Frame(processing_frame)
@@ -207,14 +207,14 @@ class HiConAGUI:
 
         self.imagej_check = tb.Checkbutton(analysis_frame, text = "ImageJ",
                                          variable=self.imagej_state, command=lambda: self._show_imagej_macro_settings(True))
-        self.imagej_check.grid(row=0, column=0, pady=5, sticky=tk.W)  
-        
+        self.imagej_check.grid(row=0, column=0, pady=5, sticky=tk.W)
+
         self.cellpose_check = tb.Checkbutton(analysis_frame, text = "Cellpose",
                                          variable=self.cellpose_state, command=lambda: self._show_cellpose_settings(True))
         self.cellpose_check.grid(row=1, column=0, pady=5, sticky=tk.W)
 
         tb.Label(analysis_frame, text="Apply analysis on").grid(row=2, column=0, pady=20, sticky=tk.W)
-        self.advanced_order_combo = tb.Combobox(analysis_frame, textvariable=self.advanced_order_text, width=18, 
+        self.advanced_order_combo = tb.Combobox(analysis_frame, textvariable=self.advanced_order_text, width=18,
                                       state='readonly', values=["stitched image", "each FOV", "all available images"])
         self.advanced_order_combo.grid(row=2, column=2, pady=5, padx=5, sticky=tk.W)
 
@@ -260,8 +260,6 @@ class HiConAGUI:
             self.measurement_files_matched, self.measurement_xml_readers_matched = self._get_measurement_to_process()
             self.processing_selection = self._define_processing()
 
-            self.master.destroy()
-
     def _load_variables(self):
         self.saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
         if os.path.isfile(self.saved_variables_f):
@@ -294,28 +292,28 @@ class HiConAGUI:
                 f.close()
         else:
             self.saved_cellpose_var = {}
-        
-        
+
+
     def _set_variable(self, variable_name):
         variables = self.saved_var | self.saved_process_var | self.saved_imagej_var | self.saved_cellpose_var
         try:
             return variables[variable_name]
         except:
             return 0
-        
+
     def _save_variables(self):
         # Save used variables using json for next run
         var_dict = {"src_entry_text": self.src_dir,
                     'output_entry_text': self.output_dir,
                     'imagej_loc': self.imagej_entry_text.get(),}
-            
+
         with open(self.saved_variables_f, "w+") as f:
             json.dump(var_dict, f)
             f.close()
 
     def _display_analysis_info(self):
         Messagebox.show_info(message="For HiConA v1.3.0, the analysis is only available to be performed in the order \n" \
-        "1) Cellpose \n2) ImageJ \nif both options are selected at the same time." \
+        "1) Cellpose \n2) ImageJ \nIf both options are selected at the same time." \
         "\n\nAdditionally, ImageJ will always be initiated in Interactive Mode to ensure certain plugins are always available. Please tick Show UI if you wish to see the analysis and ImageJ tool bar during analysis, " \
         "otherwise, as much as possible from ImageJ will be hidden from the user.", title="Analysis Workflow Order")
 
@@ -361,7 +359,7 @@ class HiConAGUI:
 
                 label = tb.Label(cb_frame, text=measurement, wraplength=400, justify='left', anchor='w')
                 label.pack(side='left', fill='x', expand=True)
-             
+
                 # Make label clickable to toggle checkbutton
                 label.bind("<Button-1>", lambda e, var=self.measure_var_list[index]: var.set(1 - var.get()))
 
@@ -379,13 +377,13 @@ class HiConAGUI:
             plate_name = opera_config_file["PLATENAME"]
             measure_num = opera_config_file["MEASUREMENT"].split(" ")
             guid = opera_config_file["GUID"]
-            
+
             name = plate_name + " - " + measure_num[-1]
-            measurement_dict[name] = guid 
+            measurement_dict[name] = guid
 
             files[guid] = cur_files
             xml_readers[guid] = cur_XMLReader
-        
+
         return dict(sorted(measurement_dict.items())), files, xml_readers
 
     def _get_measurement_to_process(self):
@@ -405,7 +403,7 @@ class HiConAGUI:
                                 'cellpose': self.cellpose_state.get(),
                                 'imagej': self.imagej_state.get(),
                                 'advanced_process_order': self.advanced_order_text.get()}
-        
+
         with open(self.saved_processing_variables_f, "w+") as f:
             json.dump(processing_selection, f)
             f.close()
@@ -444,7 +442,7 @@ class HiConAGUI:
             else:
                 self.edf_frame.grid_forget()
                 showimageJ[0] = 0
-            
+
             if self.stitching_state.get() == 1:
                 self.stitching_frame.grid(row=6, columnspan=4, pady=10, sticky=tk.W)
                 showimageJ[1] = 1
@@ -507,7 +505,7 @@ class HiConAGUI:
                          "macro_file": self.macro_text.get(),
                          "args_file": self.args_text.get(),
                          "show_UI": self.imagej_showUI_state.get()}
-        
+
         with open(self.saved_imagej_variables_f, "w+") as f:
             json.dump(imagej_config_dict, f)
             f.close()
@@ -540,13 +538,13 @@ class HiConAGUI:
 
         model_label = tb.Label(cellpose_window, text="Cellpose model", font=("Segoe UI", 10))
         model_label.grid(row=2, column=0, pady=10, sticky=tk.E)
-        model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=15, 
+        model_combobox = tb.Combobox(cellpose_window, textvariable=self.cellpose_model_text, width=15,
                                       state='readonly', values=["cyto3", "cyto2", "cyto", "nuclei"])
         model_combobox.grid(row=2, column=1, padx=10, pady=10, sticky=tk.W)
 
         diameter_label = tb.Label(cellpose_window, text="Diameter", font=("Segoe UI", 10))
         diameter_label.grid(row=3, column=0, pady=10, sticky=tk.E)
-        diameter_entry = tb.Entry(cellpose_window, text=self.cellpose_diameter_double, width=4, background="White", validate='key', 
+        diameter_entry = tb.Entry(cellpose_window, text=self.cellpose_diameter_double, width=4, background="White", validate='key',
                                       validatecommand=(self.master.register(self._validate_double), '%P'))
         diameter_entry.grid(row=3, column=1, padx=10, pady=10, sticky=tk.W)
 
@@ -555,7 +553,7 @@ class HiConAGUI:
         channel_1_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_1_int, width=4, background="White", validate='key',
                                  validatecommand=(self.master.register(self._validate_int), '%P'))
         channel_1_entry.grid(row=4, column=1, padx=10, pady=10, sticky=tk.W)
-        
+
         channel_2_label = tb.Label(cellpose_window, text="Channel 2", font=("Segoe UI", 10))
         channel_2_label.grid(row=5, column=0, pady=10, sticky=tk.E)
         channel_2_entry = tb.Entry(cellpose_window, text=self.cellpose_channel_2_int, width=4, background="White", validate='key',
@@ -567,7 +565,7 @@ class HiConAGUI:
         flow_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_flow_threshold_double, width=4, background="White", validate='key',
                                         validatecommand=(self.master.register(self._validate_double), '%P'))
         flow_threshold_entry.grid(row=6, column=1, padx=10, pady=10, sticky=tk.W)
-        
+
         cellprob_treshold_label = tb.Label(cellpose_window, text="Cellprob threshold", font=("Segoe UI", 10))
         cellprob_treshold_label.grid(row=7, column=0, pady=10, sticky=tk.E)
         cellprob_threshold_entry = tb.Entry(cellpose_window, textvariable=self.cellpose_cellprob_threshold_double, width=4, background="White", validate='key',
@@ -586,7 +584,7 @@ class HiConAGUI:
                                             validatecommand=(self.master.register(self._validate_int), '%P'))
         batchsize_entry.grid(row=9, column=1, padx=10, pady=10, sticky=tk.W)
 
-        
+
         confirm_button = tb.Button(cellpose_window, text="Confirm", command=lambda: self._cellpose_confirm(cellpose_window), bootstyle="info")
         confirm_button.grid(row=10, column=2, pady=10, sticky=tk.E)
 
@@ -599,7 +597,7 @@ class HiConAGUI:
                                 'cellprob_threshold': self.cellpose_cellprob_threshold_double.get(),
                                 'niter': self.cellpose_niter_int.get(),
                                 'batch_size': self.cellpose_batchsize_int.get()}
-        
+
         with open(self.saved_cellpose_variables_f, "w+") as f:
             json.dump(cellpose_config_dict, f)
             f.close
@@ -613,7 +611,7 @@ class HiConAGUI:
         else:
             return 1
 
-    def _validate_int(self, x): 
+    def _validate_int(self, x):
         if x == "":
             return True
         try:
@@ -621,7 +619,7 @@ class HiConAGUI:
             return value > 0
         except ValueError:
             return False
-        
+
     def _validate_double(self, x):
         if x == "":
             return True
@@ -633,7 +631,7 @@ class HiConAGUI:
 
     def get_input(self):
         return self.measurement_files_matched, self.measurement_xml_readers_matched, self.processing_selection, self.output_dir
-    
+
 
 if __name__ == "__main__":
     root = tb.Window(themename="lumen", title="HiConA")
@@ -646,4 +644,3 @@ if __name__ == "__main__":
 
     print(all_files)
     print(processes)
-    
