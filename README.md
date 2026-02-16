@@ -22,7 +22,7 @@
 
 ---
 
-## 🚀 Overview
+## Overview
 
 **HiConA** is a Python package designed for preprocessing high-content imaging data acquired with the **Opera Phenix** system.
 
@@ -62,24 +62,24 @@ Designed for:
   <img src="https://img.shields.io/badge/EDF-Wavelet%20Fusion-purple?style=flat-square" />
 </p>
 
-### 🧩 BigStitcher
+### BigStitcher
 High-accuracy tile stitching for large microscopy datasets.  
 *Hörl et al., Nature Methods (2019)*
 
-### 🧠 Cellpose
+###  Cellpose
 Deep learning-based generalist cell segmentation.  
 *Stringer et al., Nature Methods (2021)*
 
-### 🔬 Extended Depth of Field (EDF)
+### Extended Depth of Field (EDF)
 Wavelet-based z-stack fusion for multi-channel microscopy images.  
 *Forster et al., Microscopy Research and Technique (2004)*
 
-### 🖥 ImageJ / Fiji Integration
+### ImageJ / Fiji Integration
 Execute custom `.ijm` macros directly inside the pipeline.
 
 ---
 
-# 🧩 Project Structure
+# Project Structure
 
 ```bash
 .
@@ -99,7 +99,7 @@ Execute custom `.ijm` macros directly inside the pipeline.
 
 ---
 
-# 📦 Requirements
+# Requirements
 
 - **Python 3.12**
 - Windows or Linux
@@ -107,7 +107,7 @@ Execute custom `.ijm` macros directly inside the pipeline.
 
 ---
 
-# 🛠 Installation
+# Installation
 
 ## 1️⃣ Clone Repository
 
@@ -166,7 +166,7 @@ HiConA/main.py
 
 ---
 
-# 🧪 Example Workflow
+# Example Workflow
 
 1. Select Opera Phenix dataset
 2. Detect `hs` measurement folders
@@ -179,7 +179,7 @@ HiConA/main.py
 
 ---
 
-# 🔄 Uninstall
+# Uninstall
 
 ```bash
 pip uninstall HiConA
@@ -195,7 +195,7 @@ rd /s /q .venv    # Windows
 
 ---
 
-# 📚 References
+# References
 
 - Forster B. et al., *Complex Wavelets for Extended Depth-of-Field*, 2004  
 - Hörl D. et al., *BigStitcher*, Nature Methods (2019)  
