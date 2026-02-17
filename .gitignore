@@ -1,4 +1,5 @@
 /HiConA.egg-info/
 /.venv/
 __pycache__
-HiConA/saved_variables.json
+HiConA/GUI/processing_variables.json
+HiConA/GUI/saved_variables.json

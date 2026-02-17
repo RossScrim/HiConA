@@ -260,6 +260,8 @@ class HiConAGUI:
             self.measurement_files_matched, self.measurement_xml_readers_matched = self._get_measurement_to_process()
             self.processing_selection = self._define_processing()
 
+            self.master.destroy()
+
     def _load_variables(self):
         self.saved_variables_f = os.path.join(os.path.dirname(__file__), "saved_variables.json")
         if os.path.isfile(self.saved_variables_f):
