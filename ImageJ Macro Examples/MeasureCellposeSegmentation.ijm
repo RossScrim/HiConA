@@ -2,7 +2,7 @@
 #@ String imagePath
 #@ String wellPath
 
-// Becuase of the ROIManager, this script needs to be run in Interactive Mode. Please tick "Interactive" when selecting the ImageJ Macro and Arguments file.
+// Because of the ROIManager, this script needs to be run in Interactive Mode.
 // If you don't want to see the processes, enable batch mode 
 //setBatchMode(true)
 
