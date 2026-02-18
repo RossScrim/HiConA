@@ -18,7 +18,7 @@ class HiConAWorkflowHandler:
         self.run_preprocess = self._check_preprocess_selected()
         self.xml_reader = xml_reader
         # extract experimental information from config file
-        self.config_file = ConfigReader(files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
+        self.config_file = ConfigReader(files.archived_data_config).load()
         if self.config_file is not None:
             self.channels = len(self.config_file["CHANNEL"]) if isinstance(self.config_file["CHANNEL"], list) else 1
             self.planes = self.config_file["PLANES"]
