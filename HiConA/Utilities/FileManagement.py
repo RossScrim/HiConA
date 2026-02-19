@@ -1,10 +1,12 @@
 import os
 import re
 
+from sympy.plotting.textplot import is_valid
+
 
 class FilePathHandler:
     def __init__(self, archived_data_path: str):
-        self.archived_data_path = os.path.join(archived_data_path, "\\")
+        self.archived_data_path = archived_data_path + "\\"
         self.archived_image_path = os.path.join(self.archived_data_path, "images")
         self.archived_data_config_xml = None
         self.archived_data_config = None
@@ -24,6 +26,9 @@ class FilePathHandler:
     def is_valid(self):
         # If the config file is missing, we can't interpret the images
         if self.archived_data_config_xml is None:
+            return False
+
+        if self.archived_data_config is None:
             return False
 
         # If the image folder is missing, there's nothing to process
@@ -69,7 +74,7 @@ class FilePathHandler:
 
 if __name__ == "__main__":
     archived_data_path = r"Y:\Emma\Opera Phenix Test Data\hs\4e88424a-8346-4ec4-8142-cecbf124b857"
-    files = FilePathHandler(archived_data_path).archived_data_config
+    files = FilePathHandler(archived_data_path).is_valid()
     print(files)
 
         ## do some processing
