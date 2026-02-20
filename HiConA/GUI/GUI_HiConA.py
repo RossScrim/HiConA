@@ -378,7 +378,6 @@ class HiConAGUI:
                 continue
 
             opera_config_file = ConfigReader(cur_files.archived_data_config).load()
-            print(opera_config_file)
             cur_XMLReader = XMLConfigReader(cur_files.archived_data_config_xml)
 
             plate_name = opera_config_file["PLATENAME"]

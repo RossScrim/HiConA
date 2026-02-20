@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import tifffile
+import re
 
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.IOread import load_images, save_images, create_directory
@@ -55,13 +56,14 @@ class HiConAWorkflowHandler:
 
     def _run_preprocessing_pipeline(self, cur_well, well_output_dir):
         """Loop over FOVs and timepoints, preprocess, and save."""
-        total_fov = self._get_num_fov(cur_well)
+        fov_list = self.files.get_well_fov_list(cur_well)
         timepoints = range(1, self.timepoints + 1) if self.timepoints > 1 else [None]
 
-        for fov in range(1, total_fov + 1):
+        for fov in fov_list:
             images_to_stack = []
             for t in timepoints:
                 images = self._load_fov(cur_well, fov, t)
+                print(np.shape(images))
                 preprocessed = self._apply_preprocess(images)
                 images_to_stack.append(preprocessed)
 
@@ -150,7 +152,7 @@ class HiConAWorkflowHandler:
     def _apply_preprocess(self, images):
         """Normalize, project, or EDF the hyperstack before any further processing."""
         hyperstack = self._prepare_hyperstack(images)
-        #print(np.shape(hyperstack))
+
         processor = HiConAPreProcessor(hyperstack, self.config_file)
         processor.process(
             projection=self.processes_to_run.get("proj"),
@@ -181,17 +183,10 @@ class HiConAWorkflowHandler:
         if self.channels:# and not self.processes_to_run.get("stitching", 1):
             axes += "C"
         axes += "YX"
-
         return axes
 
-    def _get_num_fov(self, well_name):
-        """Determines the maximum FOV number from the files in a well's directory."""
-        well_path = self.files.get_file_path(well_name)
-        image_names = os.listdir(well_path)
-        field_nums = [int(f[f.find("f")+1:f.find("p")]) for f in image_names if not f.endswith(".db")]
-        return max(field_nums)
-
-    def _prepare_hyperstack(self, images):
+    def _prepare_hyperstack(self, images):#
+        print(np.shape(images))
         y_axis, x_axis = get_xy_axis_from_image(images)
         reshaped_images = np.reshape(images, [self.planes, self.channels, y_axis, x_axis])
         return reshaped_images
@@ -199,13 +194,13 @@ class HiConAWorkflowHandler:
     def _load_fov(self,well_name, FOV, timepoint=None):
         """
            Load images for a specific FOV (and optional timepoint) using the generic loader.
-
            Parameters:
                well_name (str): Name of the well
                FOV (int): Field of view number
                timepoint (int, optional): Timepoint index. Defaults to None.
          """
         image_pattern = self.files.build_imagename_pattern(FOV, timepoint)
+        print(f"Loading images for {well_name}, FOV {FOV}, Timepoint {timepoint if timepoint else 'N/A'} with pattern: {image_pattern}")
         paths = self.files.get_opera_phenix_images_from_FOV(well_name, image_pattern)
         return load_images(paths)
 
