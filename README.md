@@ -31,7 +31,7 @@ It integrates leading open-source bioimage analysis tools into a unified, GUI-dr
 Designed for:
 - High-throughput screening  
 - Multi-tile stitching workflows  
-- Z-stack fusion  
+- Z-stack projections 
 - Automated segmentation pipelines  
 
 ---
