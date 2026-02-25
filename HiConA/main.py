@@ -20,7 +20,6 @@ def main():
 
     for measurement_id in all_files.keys():
         HiConAWorkflowHandler(all_xml_readers[measurement_id], all_files[measurement_id], processes, output_dir).run()
-
     print("Processing finished!")
     ImageJSingleton.dispose()
 

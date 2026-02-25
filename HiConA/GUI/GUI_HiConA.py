@@ -373,7 +373,11 @@ class HiConAGUI:
             measurement_path = os.path.join(self.src_dir, measurement)
 
             cur_files = FilePathHandler(measurement_path)
-            opera_config_file = ConfigReader(cur_files.archived_data_config).load(remove_first_lines=1, remove_last_lines=2)
+
+            if not cur_files.is_valid():
+                continue
+
+            opera_config_file = ConfigReader(cur_files.archived_data_config).load()
             cur_XMLReader = XMLConfigReader(cur_files.archived_data_config_xml)
 
             plate_name = opera_config_file["PLATENAME"]

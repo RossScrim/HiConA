@@ -3,3 +3,4 @@
 __pycache__
 HiConA/GUI/processing_variables.json
 HiConA/GUI/saved_variables.json
+HiConA/GUI/imagej_config.json

@@ -12,7 +12,7 @@ class ImageJSingleton:
             plugins_dir = os.path.join(imagej_loc, "plugins") # Path to Fiji Plugins
             scyjava.config.add_option(f'-Dplugins.dir={plugins_dir}')
             cls._ij = imagej.init(imagej_loc, mode='interactive')
-            cls.show_ui(False)
+            cls.show_ui(False)            
         return cls._ij
         
     @classmethod
