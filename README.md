@@ -61,10 +61,6 @@ Designed for:
   <img src="https://img.shields.io/badge/EDF-Wavelet%20Fusion-purple?style=flat-square" />
 </p>
 
-### BigStitcher
-High-accuracy tile stitching for large microscopy datasets.  
-*Hörl et al., Nature Methods (2019)*
-
 ###  Cellpose
 Deep learning-based generalist cell segmentation.  
 *Stringer et al., Nature Methods (2021)*
@@ -88,7 +84,6 @@ Execute custom `.ijm` macros directly inside the pipeline.
 │   ├── Utilities/            # IO + config readers
 │   └── main.py               # Entry point
 ├── ImageJ Macro Examples/
-├── test/
 ├── LICENSE
 ├── requirements.txt
 └── setup.py
