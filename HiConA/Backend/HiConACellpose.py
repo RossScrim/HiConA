@@ -1,4 +1,6 @@
 import os
+import platform
+
 os.environ['MPLBACKEND'] = 'Agg'
 import json
 import csv
@@ -12,21 +14,21 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import GPUtil
 import tifffile
+import torch
 
 from HiConA.Utilities.IOread import create_directory
 
 class HiConACellposeProcessor:
-    def __init__(self, image, image_path):
+    def __init__(self, image, image_path, system_config):
         self.cellpose_config = self._load_cellpose_config()
+        self.GPU_status = system_config["GPU"]
         self.seg_ch = [self.cellpose_config["channel1"], self.cellpose_config['channel2']]
         self.diameter_data = []
-
+        
         self.image = image
         self.image_path = image_path
         self.image_name = os.path.basename(os.path.normpath(self.image_path))
-
         self.well_path, self.measurement_path = self._get_well_path(image_path, r"r\d+c\d+$")
-        
         self.data_processing_file_path = self._generate_processing_data_file()
     
     def _load_cellpose_config(self):
@@ -45,7 +47,6 @@ class HiConACellposeProcessor:
         for parent in [current] + list(current.parents):
             if compiled_pattern.match(parent.name):
                 return parent, parent.parent
-            
         return None
     
     def _generate_processing_data_file(self):
@@ -55,14 +56,13 @@ class HiConACellposeProcessor:
                 writer = csv.writer(f)
                 writer.writerow(['Filename', 'Estimated Diameter', 'Processing Time [s]'])
                 f.close()
-        
         return file_path
         
     def _create_dummy_mask(self, image_shape):
         dummy_mask = np.zeros(image_shape[:2], dtype=np.uint8)
         dummy_mask[5:15, 5:15]
         return dummy_mask
-    
+
     def _print_gpu_usage(self):
         gpus = GPUtil.getGPUs()
         for gpu in gpus:
@@ -77,7 +77,7 @@ class HiConACellposeProcessor:
 
             # Run cellpose
             model = models.Cellpose(gpu=True, model_type=self.cellpose_config["model"])
-            
+
             masks, flows, styles, diams = model.eval(
                 self.image,
                 diameter = self.cellpose_config['diameter'],
@@ -98,7 +98,7 @@ class HiConACellposeProcessor:
             if masks is None or len(masks) == 0:
                 print(f'No masks found for {self.image_name}')
                 raise ValueError("No masks found")
-            
+
             estimated_diameter = diams if isinstance(diams, (int, float)) else diams[0]
             print(f'Estimated diameter for {self.image_name}: {estimated_diameter}')
 
@@ -106,7 +106,7 @@ class HiConACellposeProcessor:
             if not outlines:
                 print(f"No outlines found for {self.image_name}")
                 raise ValueError("No outlines found")
-            
+
             # Save the ROI file
             io.save_rois(masks, os.path.join(self.save_dir, self.image_name.replace('.tiff', '')))
 

@@ -7,6 +7,7 @@ from tkinter.filedialog import askdirectory, askopenfilename
 import os
 import json
 
+from HiConA.Utilities.OSEnvironmentalSetup import EnviromentalSetup
 from HiConA.Utilities.ConfigReader import ConfigReader
 from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
 from HiConA.Utilities.FileManagement import FilePathHandler
@@ -14,8 +15,8 @@ from HiConA.Utilities.FileManagement import FilePathHandler
 class HiConAGUI:
     def __init__(self, window):
         self.master = window
+        self.system_enviroment = EnviromentalSetup()
         self._load_variables()
-
         self._initiate_window()
 
 

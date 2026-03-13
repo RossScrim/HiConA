@@ -13,11 +13,13 @@ from HiConA.Backend.HiConACellpose import HiConACellposeProcessor
 
 
 class HiConAWorkflowHandler:
-    def __init__(self, xml_reader, files, processes_to_run, output_dir):
+    def __init__(self, xml_reader, files, processes_to_run, output_dir, system_config):
         self.files = files
+        self.system_config = system_config
         self.processes_to_run = processes_to_run  # Dict with keys = process function name
         self.run_preprocess = self._check_preprocess_selected()
         self.xml_reader = xml_reader
+
         # extract experimental information from config file
         self.config_file = ConfigReader(files.archived_data_config).load()
         if self.config_file is not None:
@@ -95,7 +97,7 @@ class HiConAWorkflowHandler:
                 save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
             else:
                 ch_dir = create_directory(os.path.join(well_output_dir, "split_channels", f"ch{str(ch+1).zfill(2)}"))
-                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}_ch{str(ch+1).zfill(2)}tiff")
+                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}_ch{str(ch+1).zfill(2)}.tiff")
             channel_names = self.xml_reader.get_channel_order()
             self._save_fov(save_split_name, split_image[ch], channel_name=channel_names[ch])
 
@@ -164,7 +166,7 @@ class HiConAWorkflowHandler:
     def _apply_advanced_processes(self, hyperstack, image_path, process):
         """Run cellpose or ImageJ macro on selected image"""
         if process == "cellpose":
-            advanced_processor = HiConACellposeProcessor(hyperstack, image_path)
+            advanced_processor = HiConACellposeProcessor(hyperstack, image_path, self.system_config)
         elif process == "imagej":
             advanced_processor = HiConAImageJProcessor(hyperstack, image_path)
 

@@ -4,7 +4,7 @@ import re
 
 class FilePathHandler:
     def __init__(self, archived_data_path: str):
-        self.archived_data_path = archived_data_path + "\\"
+        self.archived_data_path = os.path.join(archived_data_path, "")
         self.archived_image_path = os.path.join(self.archived_data_path, "images")
         self.archived_data_config_xml = None
         self.archived_data_config = None
@@ -17,7 +17,7 @@ class FilePathHandler:
         if self.xml_file_match:
             self.archived_data_config_xml = os.path.join(self.archived_data_path,self.xml_file_match[0])
 
-        self.kw_file_match = self._get_name_from_regexstring(archived_data_path,r".*\.kw\.txt")
+        self.kw_file_match = self._get_name_from_regexstring(archived_data_path,r".*\.kw\.txt.*")
         if self.kw_file_match:
             self.archived_data_config = os.path.join(archived_data_path, self.kw_file_match[0])
 
@@ -85,13 +85,9 @@ class FilePathHandler:
         return sorted(list(fovs))
 
 if __name__ == "__main__":
-    archived_data_path = r"Y:\Emma\Opera Phenix Test Data\hs\4e88424a-8346-4ec4-8142-cecbf124b857"
+    archived_data_path = "/Volumes/UsersData/Emma/Opera Phenix Test Data/hs/4e88424a-8346-4ec4-8142-cecbf124b857"
     files = FilePathHandler(archived_data_path)
-    for well in files.well_names:
-        print(files.get_well_fov_list(well))
-
-        ## do some processing
-
-    #print(files.archived_data_path)
-    #print(files.archived_data_config)
-    #print(files.well_names)
+    print(os.path.exists(files.archived_data_path))
+    print(files.archived_data_config)
+    print(files.well_names)
+    print(files.xml_file_match)
