@@ -45,7 +45,7 @@ class HiConAPreProcessor:
     def _convert_to_8bit(self):
         image_8bit = []
         for image in self.image_array:
-            image_8bit.append(np.uint8((image / np.max(image)) * 255))
+            image_8bit.append(np.uint8((image / np.iinfo(np.uint16).max) * 255))
 
           # Stack the list back into a single numpy array
         self.image_array = np.array(image_8bit)

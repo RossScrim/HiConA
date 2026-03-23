@@ -95,7 +95,7 @@ class HiConAWorkflowHandler:
                 save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}.tiff")
             else:
                 ch_dir = create_directory(os.path.join(well_output_dir, "split_channels", f"ch{str(ch+1).zfill(2)}"))
-                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}_ch{str(ch+1).zfill(2)}tiff")
+                save_split_name = os.path.join(ch_dir, f"{cur_well}_f{str(fov).zfill(2)}_ch{str(ch+1).zfill(2)}.tiff")
             channel_names = self.xml_reader.get_channel_order()
             self._save_fov(save_split_name, split_image[ch], channel_name=channel_names[ch])
 

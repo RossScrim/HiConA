@@ -56,15 +56,10 @@ Designed for:
 # 🔗 Integrated Tools
 
 <p align="center">
-  <img src="https://img.shields.io/badge/BigStitcher-Nature%20Methods-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/Cellpose-Deep%20Learning-green?style=flat-square" />
   <img src="https://img.shields.io/badge/ImageJ-Fiji-orange?style=flat-square" />
   <img src="https://img.shields.io/badge/EDF-Wavelet%20Fusion-purple?style=flat-square" />
 </p>
-
-### BigStitcher
-High-accuracy tile stitching for large microscopy datasets.  
-*Hörl et al., Nature Methods (2019)*
 
 ###  Cellpose
 Deep learning-based generalist cell segmentation.  
@@ -89,7 +84,6 @@ Execute custom `.ijm` macros directly inside the pipeline.
 │   ├── Utilities/            # IO + config readers
 │   └── main.py               # Entry point
 ├── ImageJ Macro Examples/
-├── test/
 ├── LICENSE
 ├── requirements.txt
 └── setup.py
@@ -198,9 +192,8 @@ rd /s /q .venv    # Windows
 # References
 
 - Forster B. et al., *Complex Wavelets for Extended Depth-of-Field*, 2004  
-- Hörl D. et al., *BigStitcher*, Nature Methods (2019)  
 - Stringer C. et al., *Cellpose*, Nature Methods (2021)
-
+- S. Preibisch, S. Saalfeld, P. Tomancak (2009) Globally optimal stitching of tiled 3D microscopic image acquisitions”, Bioinformatics, 25(11):1463-1465
 ---
 
 # 📄 License
