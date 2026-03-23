@@ -12,6 +12,11 @@ from HiConA.Utilities.ConfigReader_XML import XMLConfigReader
 from HiConA.Utilities.FileManagement import FilePathHandler
 
 class HiConAGUI:
+    """
+    GUI window for user selection of HiConA.
+
+    Sets up widgets for input and ouput selection as well as processing and analysing options.
+    """
     def __init__(self, window):
         self.master = window
         self._load_variables()
@@ -20,6 +25,9 @@ class HiConAGUI:
 
 
     def _initiate_window(self):
+        """
+        Create variables and widgets for the GUI window.
+        """
         # Configure master
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(2, weight=1)
@@ -34,15 +42,15 @@ class HiConAGUI:
         selection_frame = tb.Frame(self.master)
         selection_frame.grid(row=2, column=0, padx=5, pady=5, sticky=tk.NSEW)
 
-        selection_frame.columnconfigure(0, weight=0, minsize=420) # Measurement frame
-        selection_frame.columnconfigure(1, weight=0, minsize=600) # Processing frame
-        selection_frame.columnconfigure(2, weight=0, minsize=200) # Analysis frame
+        selection_frame.columnconfigure(0, weight=0, minsize=420) # Space for measurement frame
+        selection_frame.columnconfigure(1, weight=0, minsize=600) # Space for processing frame
+        selection_frame.columnconfigure(2, weight=0, minsize=200) # Space for analysis frame
 
         tb.Label(selection_frame, text="Measurements", font=("Segoe UI", 14)).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
         tb.Label(selection_frame, text="Processing Options", font=("Segoe UI", 14)).grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
         tb.Label(selection_frame, text="Analysis Options", font=("Segoe UI", 14)).grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
 
-        # Source dir and Save dir selection
+        # Input dir and Output dir selection
         # Variables
         self.src_entry_text = tk.StringVar()
         self.src_entry_text.set(self._set_variable("src_entry_text"))
@@ -73,7 +81,8 @@ class HiConAGUI:
         self.confirm_button.grid(row=0, column=3, padx=10, pady=10, sticky=tk.E)
 
 
-        # Processing and Analysis selection
+        # Processing
+
         # Measurements
         # Measurement list with scrollbar
         measurement_frame = tb.Frame(selection_frame, height=600, width=420)
@@ -93,17 +102,15 @@ class HiConAGUI:
 
         self.measure_var_list = []
 
-        # Processing options
+        # Processing Frame
         processing_frame = tb.Frame(selection_frame, height=600, width=400)
         processing_frame.grid(row=1, column=1, padx=5, pady=10, sticky=tk.NSEW)
         processing_frame.grid_propagate(False)
 
-
         separator = ttk.Separator(processing_frame, orient=tk.VERTICAL)
         separator.place(relx=1.0, rely=0, relheight=1.0, anchor=tk.NE)
-        #separator.grid(rowspan=10, column=2, ipadx=10, ipady=350, sticky=tk.E)
 
-        # Processing options
+        # Processing Variables
         self.hyperstack_state = tk.IntVar()
         self.hyperstack_state.set(self._set_variable("hyperstack"))
         self.bit8_state = tk.IntVar()
@@ -121,6 +128,7 @@ class HiConAGUI:
         self.imagej_entry_text = tk.StringVar()
         self.imagej_entry_text.set(self._set_variable("imagej_loc"))
 
+        # Processing Widgets
         self.hyperstack_check = tb.Checkbutton(processing_frame, text = "Create Hyperstack",
                                                variable=self.hyperstack_state)
         self.hyperstack_check.grid(row=0, column=0, pady=5, sticky=tk.W)
@@ -168,7 +176,8 @@ class HiConAGUI:
         analysis_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NSEW)
         analysis_frame.grid_propagate(False)
 
-        # Analysis Options
+        # Analysing Variables
+        # ImageJ
         self.imagej_state = tk.IntVar()
         self.imagej_state.set(self._set_variable("imagej"))
         self.args_text = tk.StringVar()
@@ -180,6 +189,7 @@ class HiConAGUI:
         self.imagej_showUI_state = tk.IntVar()
         self.imagej_showUI_state.set(self._set_variable("show_UI"))
 
+        # Cellpose
         self.cellpose_state = tk.IntVar()
         self.cellpose_state.set(self._set_variable("cellpose"))
         self.cellpose_model_text = tk.StringVar()
@@ -202,6 +212,7 @@ class HiConAGUI:
         self.advanced_order_text = tk.StringVar()
         self.advanced_order_text.set(self._set_variable("advanced_process_order") if self._set_variable("advanced_process_order") != "0" else "stitched image")
 
+        # Analysing Widgets
         self.analysis_options = {"cellpose": self.cellpose_state,
                                  "imagej": self.imagej_state}
 
@@ -229,6 +240,9 @@ class HiConAGUI:
 
 
     def _run_button(self):
+        """
+        Confirm selections are valid. If not, a messagebox with the 
+        """
         self.imagej_loc = self.imagej_entry_text.get()
         self.stitch_ref_ch = int(self.stitching_ch_int.get())
         self.EDFchannel = int(self.edf_ch_int.get())
