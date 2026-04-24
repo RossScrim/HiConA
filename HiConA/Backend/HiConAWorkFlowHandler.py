@@ -209,7 +209,11 @@ class HiConAWorkflowHandler:
         axes = image_axes if image_axes != None else self.axes
         channels = channel_name if channel_name != None else self.xml_reader.get_channel_order()
         """Saves the processed hyperstack to disk."""
-        save_images(full_path, image, pixel_size_um, axes, channels)
+        try:
+            save_images(full_path, image, pixel_size_um, axes, channels)
+        except:
+            pass
+        
         return full_path
 
 if __name__ == "__main__":
