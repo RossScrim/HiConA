@@ -30,6 +30,12 @@ class XMLConfigReader:
     def get_channel_order(self):
         return [channel.text for channel in self.tree.findall('.//ns:Sequence/ns:Record/ns:Channel', self.ns)]
     
+    def get_stitching_overlap(self):
+        return int(self.tree.find('.//ns:Experiment/ns:Sublayouts/ns:Sublayout/ns:Definition/ns:OverlapX', self.ns).text)
+    
+    def get_num_planes(self):
+        return int(self.tree.find('.//ns:Experiment/ns:Stack/ns:Planes', self.ns).text)
+    
     def get_well_layout(self):
         sublayouts = self.tree.findall('.//ns:Experiment/ns:Sublayouts/ns:Sublayout', self.ns)
         wells = self.tree.findall('.//ns:Experiment/ns:MeasurementLayout/ns:Wells/ns:Well', self.ns)
@@ -80,13 +86,14 @@ class XMLConfigReader:
     
 
 if __name__ == '__main__':
-    test_file = r"Z:\Emma\hs\bb41dbf0-41ce-4913-ac11-9a37ce70c088\bb41dbf0-41ce-4913-ac11.xml"
+    test_file = r"Z:\Emma\Opera Phenix Test Data\hs\4e88424a-8346-4ec4-8142-cecbf124b857\4e88424a-8346-4ec4-8142.xml"
 
     XMLReader = XMLConfigReader(test_file)
 
     print(XMLReader.get_channel_order())
-
+    print(XMLReader.get_stitching_overlap())
+    print(XMLReader.get_num_planes())
     well_layout = XMLReader.get_well_layout()
     #print(well_layout)
-    XMLReader.generate_TileConfiguration(well_layout=well_layout, well_name="r04c05", output_dir=r"Z:\Emma\Stitching test processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05")
+    #XMLReader.generate_TileConfiguration(well_layout=well_layout, well_name="r04c05", output_dir=r"Z:\Emma\Stitching test processed\18112025_LS411N_ATX968_S9.6 - 1\r04c05")
 
