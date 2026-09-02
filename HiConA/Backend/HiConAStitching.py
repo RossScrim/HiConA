@@ -114,6 +114,8 @@ class HiConAStitching:
         run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
         imageID = getImageID();
         run("Set Scale...", "distance=1 known="+scale+" unit=um");
+        run("Rotate 90 Degrees Left");
+        run("Flip Vertically");
         saveAs("Tiff", orgDir+File.separator+wellName+".tiff");
         selectImage(imageID);
         """
