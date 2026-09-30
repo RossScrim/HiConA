@@ -143,7 +143,7 @@ class HiConAGUI:
 
         tb.Label(processing_frame, text="Projection Method").grid(row=3, column=0, pady=20, sticky=tk.W)
         self.proj_combo = tb.Combobox(processing_frame, textvariable=self.proj_text, width=12,
-                                      state='readonly', values=["None", "Maximum", "Minimum", "ImageJ EDF"])
+                                      state='readonly', values=["None", "Maximum", "Minimum", "Sum", "ImageJ EDF"])
         self.proj_combo.grid(row=3, column=1, pady=15, sticky=tk.W)
         self.proj_combo.bind("<<ComboboxSelected>>", self._show_hidden_frame_bind)
 

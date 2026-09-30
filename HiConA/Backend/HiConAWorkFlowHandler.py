@@ -116,7 +116,7 @@ class HiConAWorkflowHandler:
         stitching_processor.process()
         stitched_image = stitching_processor.getImage()
         #print(np.shape(stitched_image))
-        self._save_fov(os.path.join(well_output_dir, "stitching", f"{cur_well}.tiff"), stitched_image, "CYX")
+        self._save_fov(os.path.join(well_output_dir, "stitching", f"{cur_well}.tiff"), stitched_image, "TZCYX")
 
     def _run_advanced_pipeline(self, cur_well, well_output_dir, process):
         """Process stitched image or all fovs with user chosen ImageJ macro."""

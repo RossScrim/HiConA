@@ -114,8 +114,6 @@ class HiConAStitching:
         run("Re-order Hyperstack ...", "channels=[Slices (z)] slices=[Channels (c)] frames=[Frames (t)]");
         imageID = getImageID();
         run("Set Scale...", "distance=1 known="+scale+" unit=um");
-        run("Rotate 90 Degrees Left");
-        run("Flip Vertically");
         saveAs("Tiff", orgDir+File.separator+wellName+".tiff");
         selectImage(imageID);
         """
@@ -132,18 +130,33 @@ class HiConAStitching:
         WindowManager = scyjava.jimport('ij.WindowManager')
         output_image = WindowManager.getCurrentImage()
 
+        #print(f"Output image title: {output_image.getTitle()}")
+        #print(f"Output image shape: {output_image.getWidth()}, {output_image.getHeight()}")
+
         #print(f"Output image type: {type(output_image)}")
 
         if output_image is not None:
             processed_image = self.ij.py.from_java(output_image)
+            print(f"Array shape after stitching: {processed_image.shape}")
 
             if hasattr(processed_image, 'dims'):
-                #print(f"Dimension names: {processed_image.dims}")
-                desired_order = [d for d in ['T', 'Z', 'C', 'Y', 'X'] if d in processed_image.dims]
+                print(f"Dimension names: {processed_image.dims}")
+                desired_order = ['t', 'pln', 'ch', 'row', 'col']
+                for d in desired_order:
+                    if d not in processed_image.dims:
+                        processed_image = processed_image.expand_dims(d)
+
+                #desired_order = [d for d in ['t', 'pln', 'ch', 'row', 'col'] if d in processed_image.dims] #['T', 'Z', 'C', 'Y', 'X']
+                #print(f"Desired order of dimensions: {desired_order}")
+                #if "ch" not in processed_image.dims:
+                #    processed_image = processed_image.expand_dims("ch")
+                
                 processed_image = processed_image.transpose(*desired_order)
                 processed_image = processed_image.values
+                #processed_image = np.rot90(processed_image, k=1, axes=(3, 4))  # match "Rotate 90 Degrees Left"
+                #processed_image = np.flip(processed_image, axis=3)  # match "Flip Vertically"
 
-            #print(f"Array shape: {processed_image.shape}")
+            print(f"Array shape after reshape: {processed_image.shape}")
 
             output_image.close()
 

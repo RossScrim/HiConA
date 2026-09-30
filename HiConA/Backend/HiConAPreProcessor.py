@@ -29,6 +29,8 @@ class HiConAPreProcessor:
             self._max_projection()
         elif projection == "Minimum":
             self._min_projection()
+        elif projection == "Sum":
+            self._sum_projection()
         elif projection == "ImageJ EDF":
             self._imagej_EDF(EDF_channel)
         if to_8bit:
@@ -40,6 +42,16 @@ class HiConAPreProcessor:
     
     def _min_projection(self):
         self.image_array = np.min(self.image_array, axis=0)
+        return self
+
+    def _sum_projection(self):
+        self.image_array = np.sum(self.image_array, axis=0, dtype=np.float32)
+        #image_32bit = []
+        #for image in self.image_array:
+        #    image_32bit.append(np.uint32(np.round((image / np.iinfo(np.uint16).max) * np.iinfo(np.uint32).max)))
+
+        #self.image_array = np.array(image_32bit)
+        print(self.image_array.dtype)
         return self
 
     def _convert_to_8bit(self):
